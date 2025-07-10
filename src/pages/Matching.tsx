@@ -63,19 +63,19 @@ const Matching = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50 transition-all duration-300">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="transition-all duration-200 hover:scale-110 hover:-translate-x-1">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+            <Link to="/dashboard" className="flex items-center gap-2 group">
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                 <span className="text-primary-foreground font-bold text-sm">A</span>
               </div>
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <span className="text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -83,20 +83,20 @@ const Matching = () => {
 
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Find Your Match</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-3xl font-bold text-foreground mb-2 animate-slide-in-left">Find Your Match</h1>
+          <p className="text-muted-foreground animate-slide-in-right" style={{animationDelay: '0.1s'}}>
             Discover people who share your interests and values
           </p>
         </div>
 
         {/* Matching State */}
         {isMatching ? (
-          <Card className="text-center py-16">
+          <Card className="text-center py-16 animate-scale-in">
             <CardContent>
               <div className="animate-spin w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full mx-auto mb-4"></div>
-              <h3 className="text-xl font-semibold mb-2">Finding your perfect match...</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2 animate-pulse">Finding your perfect match...</h3>
+              <p className="text-muted-foreground animate-shimmer bg-gradient-to-r from-muted-foreground via-foreground to-muted-foreground bg-[length:200%_100%] bg-clip-text text-transparent">
                 Using AI to analyze taste compatibility
               </p>
             </CardContent>
@@ -104,20 +104,22 @@ const Matching = () => {
         ) : match ? (
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Match Card */}
-            <div className="space-y-6">
-              <PersonaCard user={match} showActions={false} />
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="animate-scale-in" style={{animationDelay: '0.2s'}}>
+                <PersonaCard user={match} showActions={false} />
+              </div>
               
               {/* Compatibility Score */}
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg hover:scale-[1.02] animate-fade-in-up" style={{animationDelay: '0.3s'}}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Heart className="w-5 h-5 text-destructive" />
+                    <Heart className="w-5 h-5 text-destructive animate-pulse" />
                     Compatibility Score
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-primary mb-2">
+                    <div className="text-4xl font-bold text-primary mb-2 animate-bounce-soft">
                       {match.compatibility}%
                     </div>
                     <p className="text-muted-foreground text-sm">
@@ -128,8 +130,13 @@ const Matching = () => {
                   <div className="mt-4">
                     <h4 className="font-medium text-sm mb-2">Shared Interests:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {match.sharedInterests.map((interest) => (
-                        <Badge key={interest} variant="secondary" className="bg-primary/10 text-primary">
+                      {match.sharedInterests.map((interest, index) => (
+                        <Badge 
+                          key={interest} 
+                          variant="secondary" 
+                          className="bg-primary/10 text-primary transition-all duration-200 hover:scale-105 animate-slide-in-left"
+                          style={{animationDelay: `${0.4 + index * 0.1}s`}}
+                        >
                           {interest}
                         </Badge>
                       ))}
@@ -139,16 +146,16 @@ const Matching = () => {
               </Card>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 animate-fade-in-up" style={{animationDelay: '0.5s'}}>
                 <Button 
                   variant="outline" 
-                  className="flex-1"
+                  className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-destructive/5"
                   onClick={handleNextMatch}
                 >
                   <X className="w-4 h-4 mr-2" />
                   Pass
                 </Button>
-                <Button className="flex-1">
+                <Button className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-lg animate-pulse-glow">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Start Chat
                 </Button>
@@ -157,42 +164,51 @@ const Matching = () => {
 
             {/* Conversation Starters */}
             <div className="space-y-6">
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in-up" style={{animationDelay: '0.6s'}}>
                 <CardHeader>
                   <CardTitle>Conversation Starters</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {conversationStarters.map((starter, index) => (
-                    <Card key={index} className="p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                    <Card 
+                      key={index} 
+                      className="p-4 bg-muted/30 hover:bg-muted/50 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-md animate-slide-in-right"
+                      style={{animationDelay: `${0.7 + index * 0.1}s`}}
+                    >
                       <p className="text-sm">{starter}</p>
                     </Card>
                   ))}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in-up" style={{animationDelay: '1.0s'}}>
                 <CardHeader>
                   <CardTitle>Tips for Great Conversations</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p>• Ask open-ended questions about their interests</p>
-                  <p>• Share your own experiences and stories</p>
-                  <p>• Be genuine and authentic</p>
-                  <p>• Suggest meeting up if the conversation flows well</p>
+                  <p className="transition-colors duration-200 hover:text-foreground">• Ask open-ended questions about their interests</p>
+                  <p className="transition-colors duration-200 hover:text-foreground">• Share your own experiences and stories</p>
+                  <p className="transition-colors duration-200 hover:text-foreground">• Be genuine and authentic</p>
+                  <p className="transition-colors duration-200 hover:text-foreground">• Suggest meeting up if the conversation flows well</p>
                 </CardContent>
               </Card>
             </div>
           </div>
         ) : (
           /* Initial State */
-          <Card className="text-center py-16">
+          <Card className="text-center py-16 animate-scale-in">
             <CardContent>
-              <Sparkles className="w-16 h-16 text-primary mx-auto mb-6" />
-              <h3 className="text-2xl font-semibold mb-4">Ready to meet someone new?</h3>
-              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              <Sparkles className="w-16 h-16 text-primary mx-auto mb-6 animate-bounce-soft" />
+              <h3 className="text-2xl font-semibold mb-4 animate-fade-in-up">Ready to meet someone new?</h3>
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto animate-fade-in-up" style={{animationDelay: '0.2s'}}>
                 Our AI will find someone who shares your interests and values for a meaningful connection.
               </p>
-              <Button size="lg" onClick={handleFindMatch} className="px-8">
+              <Button 
+                size="lg" 
+                onClick={handleFindMatch} 
+                className="px-8 transition-all duration-200 hover:scale-105 hover:shadow-lg animate-pulse-glow"
+                style={{animationDelay: '0.4s'}}
+              >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Find Someone to Chat With
               </Button>
@@ -202,11 +218,11 @@ const Matching = () => {
 
         {/* Find Another Match */}
         {match && !isMatching && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 animate-fade-in">
             <Button 
               variant="outline" 
               onClick={handleFindMatch}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
               <RefreshCw className="w-4 h-4" />
               Find Another Match

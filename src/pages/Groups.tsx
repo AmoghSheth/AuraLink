@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,26 +72,26 @@ const Groups = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50 transition-all duration-300">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="transition-all duration-200 hover:scale-110 hover:-translate-x-1">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
-              <Link to="/dashboard" className="flex items-center gap-2">
+              <Link to="/dashboard" className="flex items-center gap-2 group">
                 <img 
                   src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
                   alt="AuraLink Logo" 
-                  className="w-6 h-6"
+                  className="w-6 h-6 transition-transform duration-200 group-hover:scale-110"
                 />
-                <span className="text-xl font-bold text-foreground">AuraLink</span>
+                <span className="text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">AuraLink</span>
               </Link>
             </div>
             
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg animate-pulse-glow">
               <Plus className="w-4 h-4" />
               Create Group
             </Button>
@@ -100,29 +101,29 @@ const Groups = () => {
 
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Groups</h1>
-          <p className="text-muted-foreground">Connect with communities that share your passions</p>
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-3xl font-bold text-foreground mb-2 animate-slide-in-left">Groups</h1>
+          <p className="text-muted-foreground animate-slide-in-right" style={{animationDelay: '0.1s'}}>Connect with communities that share your passions</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-muted rounded-lg p-1">
+        <div className="flex gap-1 mb-6 bg-muted rounded-lg p-1 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           <button
             onClick={() => setActiveTab("discover")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
               activeTab === "discover"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-background text-foreground shadow-sm scale-[1.02]"
+                : "text-muted-foreground hover:text-foreground hover:scale-[1.01]"
             }`}
           >
             Discover Groups
           </button>
           <button
             onClick={() => setActiveTab("my-groups")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
               activeTab === "my-groups"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-background text-foreground shadow-sm scale-[1.02]"
+                : "text-muted-foreground hover:text-foreground hover:scale-[1.01]"
             }`}
           >
             My Groups ({myGroups.length})
@@ -132,26 +133,27 @@ const Groups = () => {
         {activeTab === "discover" ? (
           <div className="space-y-6">
             {/* Search and Filters */}
-            <Card>
+            <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in-up" style={{animationDelay: '0.3s'}}>
               <CardContent className="p-4">
                 <div className="flex gap-4 mb-4">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 transition-all duration-200" />
                     <Input
                       placeholder="Search groups..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 transition-all duration-200 focus:scale-[1.02]"
                     />
                   </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
+                  {categories.map((category, index) => (
                     <Badge
                       key={category}
                       variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 animate-slide-in-left"
+                      style={{animationDelay: `${0.4 + index * 0.05}s`}}
                     >
                       {category}
                     </Badge>
@@ -162,25 +164,29 @@ const Groups = () => {
 
             {/* Discover Groups Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {discoverGroups.map((group) => (
-                <Card key={group.id} className="hover:shadow-lg transition-shadow">
+              {discoverGroups.map((group, index) => (
+                <Card 
+                  key={group.id} 
+                  className="hover:shadow-lg transition-all duration-300 hover:scale-[1.03] group animate-fade-in-up"
+                  style={{animationDelay: `${0.5 + index * 0.1}s`}}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
+                        <CardTitle className="text-lg flex items-center gap-2 transition-colors duration-200 group-hover:text-primary">
                           {group.name}
                           {group.trending && (
-                            <TrendingUp className="w-4 h-4 text-highlight" />
+                            <TrendingUp className="w-4 h-4 text-highlight animate-bounce-soft" />
                           )}
                         </CardTitle>
-                        <Badge variant="secondary" className="mt-1 text-xs">
+                        <Badge variant="secondary" className="mt-1 text-xs transition-all duration-200 group-hover:scale-105">
                           {group.category}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4">
+                    <p className="text-muted-foreground text-sm mb-4 transition-colors duration-200 group-hover:text-foreground/80">
                       {group.description}
                     </p>
                     <div className="flex items-center justify-between">
@@ -188,7 +194,7 @@ const Groups = () => {
                         <Users className="w-4 h-4" />
                         {group.members} members
                       </div>
-                      <Button size="sm">Join Group</Button>
+                      <Button size="sm" className="transition-all duration-200 hover:scale-105 hover:shadow-md">Join Group</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -198,28 +204,32 @@ const Groups = () => {
         ) : (
           /* My Groups */
           <div className="space-y-4">
-            {myGroups.map((group) => (
-              <Card key={group.id} className="hover:shadow-md transition-shadow">
+            {myGroups.map((group, index) => (
+              <Card 
+                key={group.id} 
+                className="hover:shadow-md transition-all duration-300 group hover:scale-[1.02] animate-fade-in-up"
+                style={{animationDelay: `${0.3 + index * 0.1}s`}}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                           <Users className="w-6 h-6 text-primary" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-lg">{group.name}</h3>
+                            <h3 className="font-semibold text-lg transition-colors duration-200 group-hover:text-primary">{group.name}</h3>
                             {group.unreadMessages > 0 && (
-                              <Badge variant="destructive" className="text-xs">
+                              <Badge variant="destructive" className="text-xs animate-pulse">
                                 {group.unreadMessages}
                               </Badge>
                             )}
                           </div>
-                          <Badge variant="secondary" className="mb-2 text-xs">
+                          <Badge variant="secondary" className="mb-2 text-xs transition-all duration-200 group-hover:scale-105">
                             {group.category}
                           </Badge>
-                          <p className="text-muted-foreground text-sm mb-2">
+                          <p className="text-muted-foreground text-sm mb-2 transition-colors duration-200 group-hover:text-foreground/80">
                             {group.description}
                           </p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -232,7 +242,7 @@ const Groups = () => {
                         </div>
                       </div>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="transition-all duration-200 hover:scale-105 hover:shadow-md">
                       <Link to={`/groups/${group.id}`}>
                         Open
                       </Link>
@@ -243,14 +253,14 @@ const Groups = () => {
             ))}
 
             {myGroups.length === 0 && (
-              <Card className="text-center py-12">
+              <Card className="text-center py-12 animate-scale-in">
                 <CardContent>
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-bounce-soft" />
                   <h3 className="text-lg font-semibold mb-2">No groups yet</h3>
                   <p className="text-muted-foreground mb-4">
                     Join some groups to start connecting with like-minded people
                   </p>
-                  <Button onClick={() => setActiveTab("discover")}>
+                  <Button onClick={() => setActiveTab("discover")} className="transition-all duration-200 hover:scale-105 hover:shadow-md">
                     Discover Groups
                   </Button>
                 </CardContent>
