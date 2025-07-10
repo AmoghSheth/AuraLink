@@ -10,9 +10,11 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="p-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">A</span>
-          </div>
+          <img 
+            src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+            alt="AuraLink Logo" 
+            className="w-8 h-8"
+          />
           <span className="text-2xl font-bold text-foreground">AuraLink</span>
         </div>
         

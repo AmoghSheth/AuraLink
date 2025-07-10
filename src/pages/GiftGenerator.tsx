@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,9 +110,11 @@ const GiftGenerator = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
-              </div>
+              <img 
+                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                alt="AuraLink Logo" 
+                className="w-6 h-6"
+              />
               <span className="text-xl font-bold text-foreground">AuraLink</span>
             </Link>
           </div>

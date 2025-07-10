@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PersonaCard from "@/components/PersonaCard";
@@ -48,9 +47,11 @@ const Dashboard = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">A</span>
-              </div>
+              <img 
+                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                alt="AuraLink Logo" 
+                className="w-8 h-8"
+              />
               <span className="text-2xl font-bold text-foreground">AuraLink</span>
             </Link>
             

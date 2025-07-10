@@ -29,9 +29,11 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">A</span>
-            </div>
+            <img 
+              src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+              alt="AuraLink Logo" 
+              className="w-12 h-12"
+            />
             <span className="text-3xl font-bold text-foreground">AuraLink</span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground mb-2">Welcome back</h1>
