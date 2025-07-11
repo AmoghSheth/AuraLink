@@ -60,15 +60,14 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
           {user.tags.slice(0, isCompact ? 3 : 5).map((tag, index) => (
             <Badge 
               key={tag} 
-              variant="secondary" 
-              className={`transition-all duration-200 hover:scale-105 hover:bg-primary/10 hover:text-primary animate-slide-in-left ${isCompact ? 'text-xs px-2 py-0.5' : 'text-xs'}`}
+              className={`transition-all duration-200 hover:scale-105 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 animate-slide-in-left ${isCompact ? 'text-xs px-2 py-0.5' : 'text-xs'}`}
               style={{animationDelay: `${index * 0.1}s`}}
             >
               {tag}
             </Badge>
           ))}
           {user.tags.length > (isCompact ? 3 : 5) && (
-            <Badge variant="outline" className="text-xs transition-all duration-200 hover:scale-105">
+            <Badge variant="outline" className="text-xs transition-all duration-200 hover:scale-105 text-foreground border-border">
               +{user.tags.length - (isCompact ? 3 : 5)} more
             </Badge>
           )}

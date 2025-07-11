@@ -2,11 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Users, Sparkles, Gift, Search } from "lucide-react";
+import { Users, Sparkles, Gift, Search, Heart, Coffee, BookOpen, Calendar } from "lucide-react";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Navigation */}
       <nav className="p-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ const Landing = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-20">
           <Card className="p-6 hover:scale-105 transition-transform duration-200">
             <CardContent className="text-center p-0">
               <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
@@ -110,8 +110,58 @@ const Landing = () => {
           </Card>
         </div>
 
+        {/* Seniors Use Cases Section */}
+        <div className="bg-card rounded-2xl p-8 max-w-5xl mx-auto shadow-lg mb-20">
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Perfect for Active Seniors</h2>
+          <p className="text-muted-foreground mb-8 text-lg">
+            AuraLink helps mature adults find genuine friendships and meaningful activities based on shared interests and values.
+          </p>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <Coffee className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Coffee Companions</h3>
+              <p className="text-sm text-muted-foreground">
+                Find local friends who share your morning routine and favorite café spots
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
+                <BookOpen className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Book Clubs</h3>
+              <p className="text-sm text-muted-foreground">
+                Connect with fellow readers and join discussions about your favorite genres
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-highlight/10 flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-highlight" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Activity Partners</h3>
+              <p className="text-sm text-muted-foreground">
+                Discover walking groups, gardening clubs, and hobby enthusiasts nearby
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Heart className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Meaningful Bonds</h3>
+              <p className="text-sm text-muted-foreground">
+                Build lasting friendships based on shared values and life experiences
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* CTA Section */}
-        <div className="mt-20 bg-card rounded-2xl p-8 max-w-2xl mx-auto shadow-lg">
+        <div className="bg-card rounded-2xl p-8 max-w-2xl mx-auto shadow-lg">
           <h2 className="text-3xl font-bold mb-4">Ready to Connect?</h2>
           <p className="text-muted-foreground mb-6">
             Join thousands of people building authentic relationships through shared culture and interests.
