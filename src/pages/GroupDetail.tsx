@@ -17,7 +17,7 @@ const GroupDetail = () => {
     members: 342,
     category: "Music",
     description: "Discovering underground artists and intimate venue experiences in the heart of New York City",
-    created: "January 2024",
+    created: "January 2025",
     visibility: "Open",
     isAdmin: false,
     isMember: true,
@@ -83,11 +83,11 @@ const GroupDetail = () => {
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
               <img 
-                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                src="/logo.png" 
                 alt="AuraLink Logo" 
-                className="w-6 h-6"
+                className="w-10 h-10"
               />
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -106,11 +106,11 @@ const GroupDetail = () => {
                       <Users className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                      <h1 className="text-2xl font-bold text-foreground mb-1">{group.name}</h1>
+                      <h1 className="text-2xl font-display font-bold text-foreground mb-1 tracking-tight-pro">{group.name}</h1>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                         <span>{group.members} members</span>
                         <span>•</span>
-                        <Badge variant="secondary">{group.category}</Badge>
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">{group.category}</Badge>
                         <span>•</span>
                         <span>{group.visibility}</span>
                       </div>
@@ -142,17 +142,17 @@ const GroupDetail = () => {
               <CardContent>
                 <div className="space-y-4 mb-6">
                   {messages.map((message) => (
-                    <div key={message.id} className="flex gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
+                    <div key={message.id} className="flex gap-3 p-4 rounded-lg bg-muted/30 hover:bg-primary hover:text-primary-foreground transition-all duration-200 group">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary transition-all duration-200 group-hover:bg-primary-foreground group-hover:text-primary">
                         {message.avatar}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-sm">{message.user}</span>
-                          <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                          <span className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{message.timestamp}</span>
                         </div>
                         <p className="text-sm text-foreground mb-2">{message.message}</p>
-                        <Button variant="ghost" size="sm" className="text-xs h-auto p-1">
+                        <Button variant="ghost" size="sm" className="text-xs h-auto p-1 group-hover:text-primary-foreground/80">
                           {message.replies} replies
                         </Button>
                       </div>
@@ -226,7 +226,7 @@ const GroupDetail = () => {
                   {aiSuggestions.map((suggestion, index) => (
                     <div 
                       key={index}
-                      className="p-3 rounded-lg bg-highlight/5 border border-highlight/20 hover:bg-highlight/10 transition-colors cursor-pointer"
+                      className="p-3 rounded-lg bg-highlight/5 border border-highlight/20 hover:bg-highlight hover:text-white transition-all duration-200 cursor-pointer"
                     >
                       <p className="text-sm text-foreground">{suggestion}</p>
                     </div>

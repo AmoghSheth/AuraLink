@@ -71,10 +71,12 @@ const Search = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <img 
+                src="/logo.png" 
+                alt="AuraLink Logo" 
+                className="w-10 h-10"
+              />
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -83,7 +85,7 @@ const Search = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discover People</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">Discover People</h1>
           <p className="text-muted-foreground">Find others who share your interests and values</p>
         </div>
 
@@ -108,7 +110,7 @@ const Search = () => {
                 <Filter className="w-4 h-4" />
                 Filters
                 {activeFilters.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge className="ml-1 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                     {activeFilters.length}
                   </Badge>
                 )}

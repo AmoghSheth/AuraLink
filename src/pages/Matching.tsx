@@ -72,10 +72,12 @@ const Matching = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">AuraLink</span>
+              <img 
+                src="/logo.png" 
+                alt="AuraLink Logo" 
+                className="w-10 h-10 transition-transform duration-200 group-hover:scale-110"
+              />
+              <span className="text-xl font-display font-bold text-foreground transition-colors duration-200 group-hover:text-primary tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -84,7 +86,7 @@ const Matching = () => {
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2 animate-slide-in-left">Find Your Match</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 animate-slide-in-left tracking-tight-pro">Find Your Match</h1>
           <p className="text-muted-foreground animate-slide-in-right" style={{animationDelay: '0.1s'}}>
             Discover people who share your interests and values
           </p>
@@ -149,7 +151,7 @@ const Matching = () => {
               <div className="flex gap-3 animate-fade-in-up" style={{animationDelay: '0.5s'}}>
                 <Button 
                   variant="outline" 
-                  className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-destructive/5"
+                  className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-destructive hover:text-destructive-foreground"
                   onClick={handleNextMatch}
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -172,7 +174,7 @@ const Matching = () => {
                   {conversationStarters.map((starter, index) => (
                     <Card 
                       key={index} 
-                      className="p-4 bg-muted/30 hover:bg-muted/50 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-md animate-slide-in-right"
+                      className="p-4 bg-muted/30 hover:bg-accent hover:text-accent-foreground transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-md animate-slide-in-right"
                       style={{animationDelay: `${0.7 + index * 0.1}s`}}
                     >
                       <p className="text-sm">{starter}</p>

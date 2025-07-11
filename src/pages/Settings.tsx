@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ const Settings = () => {
     bio: "Your aura blends alternative rock, spicy food, and eco-consciousness.",
     visibility: "friends",
   });
+
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [notifications, setNotifications] = useState({
     matches: true,
@@ -34,6 +37,26 @@ const Settings = () => {
     setNotifications(prev => ({ ...prev, [setting]: !prev[setting as keyof typeof prev] }));
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check if file is an image
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfilePhoto(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please select an image file');
+      }
+    }
+  };
+
+  const triggerPhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -46,10 +69,12 @@ const Settings = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <img 
+                src="/logo.png" 
+                alt="AuraLink Logo" 
+                className="w-10 h-10"
+              />
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -58,7 +83,7 @@ const Settings = () => {
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">Settings</h1>
           <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
 
@@ -80,7 +105,7 @@ const Settings = () => {
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                         activeTab === item.id
                           ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          : "text-muted-foreground hover:text-accent-foreground hover:bg-accent"
                       }`}
                     >
                       <item.icon className="w-4 h-4" />
@@ -103,10 +128,31 @@ const Settings = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-xl">
-                        S
-                      </div>
-                      <Button variant="outline">Change Photo</Button>
+                      {profilePhoto ? (
+                        <img 
+                          src={profilePhoto} 
+                          alt="Profile" 
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-xl">
+                          S
+                        </div>
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={triggerPhotoUpload}
+                        className="hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
+                        Change Photo
+                      </Button>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
@@ -161,7 +207,7 @@ const Settings = () => {
                     <div className="space-y-4">
                       <div className="flex flex-wrap gap-2">
                         {["indie rock", "spicy food", "sustainability", "farm-to-table", "concerts"].map((tag) => (
-                          <Badge key={tag} variant="secondary" className="cursor-pointer">
+                          <Badge key={tag} className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                             {tag} ×
                           </Badge>
                         ))}

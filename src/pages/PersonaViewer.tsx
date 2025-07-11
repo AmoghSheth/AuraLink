@@ -49,10 +49,12 @@ const PersonaViewer = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <img 
+                src="/logo.png" 
+                alt="AuraLink Logo" 
+                className="w-10 h-10"
+              />
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -73,7 +75,7 @@ const PersonaViewer = () => {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h1 className="text-3xl font-bold text-foreground mb-1">{user.name}</h1>
+                        <h1 className="text-3xl font-display font-bold text-foreground mb-1 tracking-tight-pro">{user.name}</h1>
                         <div className="flex items-center gap-3 text-muted-foreground text-sm">
                           <span>{user.age} years old</span>
                           <span>•</span>
@@ -95,7 +97,7 @@ const PersonaViewer = () => {
 
                     {user.mutualFriends > 0 && (
                       <div className="flex items-center gap-2 mb-4">
-                        <Badge variant="secondary" className="bg-primary/10 text-primary">
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                           {user.mutualFriends} mutual friends
                         </Badge>
                       </div>
@@ -144,7 +146,7 @@ const PersonaViewer = () => {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {items.map((item) => (
-                          <Badge key={item} variant="secondary" className="bg-muted/50">
+                          <Badge key={item} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                             {item}
                           </Badge>
                         ))}
@@ -163,7 +165,7 @@ const PersonaViewer = () => {
               <CardContent>
                 <div className="flex flex-wrap gap-3">
                   {user.values.map((value) => (
-                    <Badge key={value} className="bg-accent/10 text-accent border-accent/20 px-4 py-2">
+                    <Badge key={value} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                       {value}
                     </Badge>
                   ))}
@@ -260,7 +262,7 @@ const PersonaViewer = () => {
                     <div className="text-xs text-muted-foreground">Shared interests:</div>
                     <div className="flex flex-wrap gap-1">
                       {["photography", "sustainability", "outdoor adventures"].map((shared) => (
-                        <Badge key={shared} variant="outline" className="text-xs">
+                        <Badge key={shared} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                           {shared}
                         </Badge>
                       ))}

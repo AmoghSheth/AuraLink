@@ -33,7 +33,7 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className={`font-semibold text-foreground truncate transition-colors duration-200 group-hover:text-primary ${isCompact ? 'text-base' : 'text-lg'}`}>
+              <h3 className={`font-display font-semibold text-foreground truncate transition-colors duration-200 group-hover:text-primary tracking-tight ${isCompact ? 'text-base' : 'text-lg'}`}>
                 {user.name}
               </h3>
               <span className={`text-muted-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
@@ -60,14 +60,14 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
           {user.tags.slice(0, isCompact ? 3 : 5).map((tag, index) => (
             <Badge 
               key={tag} 
-              className={`transition-all duration-200 hover:scale-105 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 animate-slide-in-left`}
+              className={`transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm animate-slide-in-left`}
               style={{animationDelay: `${index * 0.1}s`}}
             >
               {tag}
             </Badge>
           ))}
           {user.tags.length > (isCompact ? 3 : 5) && (
-            <Badge variant="outline" className="transition-all duration-200 hover:scale-105 text-foreground border-border">
+            <Badge className="transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
               +{user.tags.length - (isCompact ? 3 : 5)} more
             </Badge>
           )}
@@ -79,7 +79,7 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
             <Button 
               size={isCompact ? "sm" : "default"} 
               variant="outline" 
-              className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary/5"
+              className="flex-1 transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary hover:text-primary-foreground"
             >
               <MessageCircle className="w-4 h-4 mr-1" />
               Chat
@@ -87,21 +87,21 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
             <Button 
               size={isCompact ? "sm" : "default"} 
               variant="outline" 
-              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-destructive/5"
+              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-destructive hover:text-destructive-foreground"
             >
               <Heart className="w-4 h-4" />
             </Button>
             <Button 
               size={isCompact ? "sm" : "default"} 
               variant="outline" 
-              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-accent/5"
+              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-accent hover:text-accent-foreground"
             >
               <Share2 className="w-4 h-4" />
             </Button>
             <Button 
               size={isCompact ? "sm" : "default"} 
               variant="outline" 
-              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-secondary/5"
+              className="transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-secondary hover:text-secondary-foreground"
             >
               <UserPlus className="w-4 h-4" />
             </Button>

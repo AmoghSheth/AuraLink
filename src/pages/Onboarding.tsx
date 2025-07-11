@@ -90,9 +90,11 @@ const Onboarding = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">A</span>
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="AuraLink Logo" 
+              className="w-10 h-10"
+            />
             <span className="text-2xl font-bold text-foreground">AuraLink</span>
           </Link>
           
@@ -188,7 +190,7 @@ const Onboarding = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {formData.interests.map((interest) => (
-                        <Badge key={interest} variant="secondary">
+                        <Badge key={interest} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                           {interest}
                         </Badge>
                       ))}
@@ -226,7 +228,7 @@ const Onboarding = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {formData.values.map((value) => (
-                        <Badge key={value} className="bg-accent/10 text-accent">
+                        <Badge key={value} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                           {value}
                         </Badge>
                       ))}
@@ -264,7 +266,7 @@ const Onboarding = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {formData.lifestyle.map((lifestyle) => (
-                        <Badge key={lifestyle} className="bg-highlight/10 text-highlight">
+                        <Badge key={lifestyle} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                           {lifestyle}
                         </Badge>
                       ))}

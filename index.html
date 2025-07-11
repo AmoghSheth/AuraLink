@@ -2,19 +2,66 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="/logowithback.png" sizes="any" type="image/png" />
+    <link rel="icon" href="/logowithback.png" sizes="48x48" type="image/png" />
+    <link rel="icon" href="/logowithback.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/logowithback.png" sizes="16x16" type="image/png" />
+    <link rel="apple-touch-icon" href="/logowithback.png" sizes="180x180" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>aura-taste-verse</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>AuraLink</title>
+    <meta name="description" content="Connect through shared tastes and personalities" />
+    <meta name="author" content="AuraLink" />
 
-    <meta property="og:title" content="aura-taste-verse" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="AuraLink" />
+    <meta property="og:description" content="Connect through shared tastes and personalities" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="/logowithback.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:site" content="@auralink" />
+    <meta name="twitter:image" content="/logowithback.png" />
+
+    <script>
+      // Create a zoomed-in favicon from the center of the original image
+      function createZoomedFavicon() {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 32;
+          canvas.height = 32;
+          
+          // Calculate crop dimensions to focus on center (zoom factor: 1.5x)
+          const zoomFactor = 1.5;
+          const sourceSize = Math.min(img.width, img.height) / zoomFactor;
+          const sourceX = (img.width - sourceSize) / 2;
+          const sourceY = (img.height - sourceSize) / 2;
+          
+          // Draw the cropped and zoomed portion
+          ctx.drawImage(
+            img,
+            sourceX, sourceY, sourceSize, sourceSize,  // source rectangle (center crop)
+            0, 0, 32, 32  // destination rectangle
+          );
+          
+          // Convert to favicon and update
+          const faviconUrl = canvas.toDataURL('image/png');
+          
+          // Update all favicon links
+          const links = document.querySelectorAll('link[rel*="icon"]');
+          links.forEach(link => {
+            if (!link.href.includes('apple-touch-icon')) {
+              link.href = faviconUrl;
+            }
+          });
+        };
+        img.src = '/logowithback.png';
+      }
+      
+      // Execute after DOM loads
+      document.addEventListener('DOMContentLoaded', createZoomedFavicon);
+    </script>
   </head>
 
   <body>

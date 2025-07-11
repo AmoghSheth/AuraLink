@@ -30,7 +30,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center gap-2 mb-6">
             <img 
-              src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+              src="/logo.png" 
               alt="AuraLink Logo" 
               className="w-12 h-12"
             />
@@ -41,7 +41,7 @@ const Login = () => {
         </div>
 
         {/* Login Form */}
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
           </CardHeader>
@@ -93,7 +93,7 @@ const Login = () => {
                 </label>
                 <Link 
                   to="/forgot-password" 
-                  className="text-primary hover:text-primary/80 transition-colors"
+                  className="text-primary hover:text-accent transition-all duration-200 hover:scale-105 hover:font-semibold"
                 >
                   Forgot password?
                 </Link>
@@ -101,7 +101,7 @@ const Login = () => {
 
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold" 
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -120,7 +120,7 @@ const Login = () => {
                 Don't have an account?{" "}
                 <Link 
                   to="/signup" 
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                  className="text-primary hover:text-accent font-medium transition-all duration-200 hover:scale-105 hover:font-bold"
                 >
                   Sign up
                 </Link>

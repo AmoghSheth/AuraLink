@@ -92,11 +92,11 @@ const Friends = () => {
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
               <img 
-                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                src="/logo.png" 
                 alt="AuraLink Logo" 
-                className="w-6 h-6"
+                className="w-10 h-10"
               />
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -109,7 +109,7 @@ const Friends = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">Friends</h1>
+                <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">Friends</h1>
                 <p className="text-muted-foreground">
                   {friends.length} connections • {friends.reduce((sum, f) => sum + f.overlapScore, 0) / friends.length}% avg compatibility
                 </p>
@@ -176,7 +176,7 @@ const Friends = () => {
                               <span>•</span>
                               <span>Active {friend.lastActive}</span>
                             </div>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary">
+                            <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                               {friend.overlapScore}% match
                             </Badge>
                           </div>

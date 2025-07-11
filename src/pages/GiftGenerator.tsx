@@ -111,11 +111,11 @@ const GiftGenerator = () => {
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
               <img 
-                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                src="/logo.png" 
                 alt="AuraLink Logo" 
-                className="w-6 h-6"
+                className="w-10 h-10"
               />
-              <span className="text-xl font-bold text-foreground">AuraLink</span>
+              <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
         </div>
@@ -124,7 +124,7 @@ const GiftGenerator = () => {
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">AI Gift Generator</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">AI Gift Generator</h1>
           <p className="text-muted-foreground">
             Get personalized gift suggestions based on someone's interests and personality
           </p>
@@ -158,7 +158,7 @@ const GiftGenerator = () => {
                       className={`cursor-pointer transition-all ${
                         selectedFriend === friend.id 
                           ? "ring-2 ring-primary bg-primary/5" 
-                          : "hover:bg-muted/50"
+                          : "hover:bg-accent hover:text-accent-foreground"
                       }`}
                       onClick={() => setSelectedFriend(friend.id)}
                     >
@@ -248,7 +248,7 @@ const GiftGenerator = () => {
                                 <p className="text-muted-foreground text-sm mb-2">
                                   {gift.description}
                                 </p>
-                                <Badge variant="outline" className="text-xs">
+                                <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
                                   {gift.price}
                                 </Badge>
                               </div>

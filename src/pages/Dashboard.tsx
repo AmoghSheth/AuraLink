@@ -48,34 +48,34 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <Link to="/dashboard" className="flex items-center gap-2 group">
               <img 
-                src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                src="/logo.png" 
                 alt="AuraLink Logo" 
-                className="w-8 h-8 transition-transform duration-200 group-hover:scale-110"
+                className="w-10 h-10 transition-transform duration-200 group-hover:scale-110"
               />
-              <span className="text-2xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">AuraLink</span>
+              <span className="text-2xl font-display font-bold text-foreground transition-colors duration-200 group-hover:text-primary tracking-tight-pro">AuraLink</span>
             </Link>
             
             <div className="flex items-center gap-4">
               <Link to="/search">
-                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-primary/10">
+                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-primary hover:text-primary-foreground">
                   <Search className="w-4 h-4 mr-2" />
                   Search
                 </Button>
               </Link>
               <Link to="/match">
-                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-accent/10">
+                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-accent hover:text-accent-foreground">
                   <Sparkles className="w-4 h-4 mr-2" />
                   Match
                 </Button>
               </Link>
               <Link to="/groups">
-                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-secondary/10">
+                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-secondary hover:text-secondary-foreground">
                   <Users className="w-4 h-4 mr-2" />
                   Groups
                 </Button>
               </Link>
               <Link to="/gift">
-                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-highlight/10">
+                <Button variant="ghost" size="sm" className="transition-all duration-200 hover:scale-105 hover:bg-highlight hover:text-white">
                   <Gift className="w-4 h-4 mr-2" />
                   Gift
                 </Button>
@@ -92,7 +92,7 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2 animate-slide-in-left">Welcome back, Sarah!</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 animate-slide-in-left tracking-tight-pro">Welcome back, Sarah!</h1>
           <p className="text-muted-foreground animate-slide-in-left" style={{animationDelay: '0.1s'}}>Here's what's happening in your network</p>
         </div>
 
@@ -145,23 +145,23 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] animate-slide-in-right" style={{animationDelay: '0.6s'}}>
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center transition-transform duration-200 hover:scale-110">
-                      <Users className="w-4 h-4 text-primary" />
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:scale-[1.02] animate-slide-in-right" style={{animationDelay: '0.6s'}}>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center transition-all duration-200 hover:scale-110 group-hover:bg-primary-foreground">
+                      <Users className="w-4 h-4 text-primary transition-colors duration-200 group-hover:text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Holly P added you as a friend</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
+                      <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">2 hours ago</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] animate-slide-in-right" style={{animationDelay: '0.7s'}}>
-                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center transition-transform duration-200 hover:scale-110">
-                      <Sparkles className="w-4 h-4 text-accent" />
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:scale-[1.02] animate-slide-in-right group" style={{animationDelay: '0.7s'}}>
+                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center transition-all duration-200 hover:scale-110 group-hover:bg-accent-foreground">
+                      <Sparkles className="w-4 h-4 text-accent transition-colors duration-200 group-hover:text-accent" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">New group suggestion: "Coffee Connoisseurs"</p>
-                      <p className="text-xs text-muted-foreground">1 day ago</p>
+                      <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/80">1 day ago</p>
                     </div>
                   </div>
                 </div>
@@ -206,10 +206,10 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-3">
                   {suggestedGroups.map((group, index) => (
-                    <div key={group.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50 hover:scale-[1.02] animate-slide-in-left" style={{animationDelay: `${1.0 + index * 0.1}s`}}>
+                    <div key={group.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-secondary hover:text-secondary-foreground hover:scale-[1.02] animate-slide-in-left group" style={{animationDelay: `${1.0 + index * 0.1}s`}}>
                       <div>
                         <p className="font-medium text-sm">{group.name}</p>
-                        <p className="text-xs text-muted-foreground">{group.members} members</p>
+                        <p className="text-xs text-muted-foreground group-hover:text-secondary-foreground/80">{group.members} members</p>
                       </div>
                       <Button size="sm" variant="outline" className="transition-all duration-200 hover:scale-105 hover:shadow-md">Join</Button>
                     </div>

@@ -20,7 +20,24 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'sans': ['Inter', 'system-ui', 'sans-serif'],
+				'sans': ['Geist', 'Inter', 'system-ui', 'sans-serif'],
+				'display': ['Plus Jakarta Sans', 'Geist', 'Inter', 'system-ui', 'sans-serif'],
+				'mono': ['Geist Mono', 'Monaco', 'Courier New', 'monospace'],
+			},
+			fontSize: {
+				'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.025em' }],
+				'sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.025em' }],
+				'base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '0.015em' }],
+				'lg': ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '0.015em' }],
+				'xl': ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '0.015em' }],
+				'2xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.015em' }],
+				'3xl': ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.025em' }],
+				'4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.035em' }],
+				'5xl': ['3rem', { lineHeight: '1', letterSpacing: '-0.045em' }],
+				'6xl': ['3.75rem', { lineHeight: '1', letterSpacing: '-0.055em' }],
+				'7xl': ['4.5rem', { lineHeight: '1', letterSpacing: '-0.065em' }],
+				'8xl': ['6rem', { lineHeight: '1', letterSpacing: '-0.075em' }],
+				'9xl': ['8rem', { lineHeight: '1', letterSpacing: '-0.085em' }],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

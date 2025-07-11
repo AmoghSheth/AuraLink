@@ -83,11 +83,11 @@ const Groups = () => {
               </Link>
               <Link to="/dashboard" className="flex items-center gap-2 group">
                 <img 
-                  src="/lovable-uploads/88998c72-a532-4d1f-ba48-dca50d9b0bb0.png" 
+                  src="/logo.png" 
                   alt="AuraLink Logo" 
-                  className="w-6 h-6 transition-transform duration-200 group-hover:scale-110"
+                  className="w-10 h-10 transition-transform duration-200 group-hover:scale-110"
                 />
-                <span className="text-xl font-bold text-foreground transition-colors duration-200 group-hover:text-primary">AuraLink</span>
+                <span className="text-xl font-display font-bold text-foreground transition-colors duration-200 group-hover:text-primary tracking-tight-pro">AuraLink</span>
               </Link>
             </div>
             
@@ -102,7 +102,7 @@ const Groups = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2 animate-slide-in-left">Groups</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 animate-slide-in-left tracking-tight-pro">Groups</h1>
           <p className="text-muted-foreground animate-slide-in-right" style={{animationDelay: '0.1s'}}>Connect with communities that share your passions</p>
         </div>
 
@@ -151,8 +151,7 @@ const Groups = () => {
                   {categories.map((category, index) => (
                     <Badge
                       key={category}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all duration-200 hover:scale-105 animate-slide-in-left"
+                      className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm transition-all duration-200 hover:scale-105 animate-slide-in-left"
                       style={{animationDelay: `${0.4 + index * 0.05}s`}}
                     >
                       {category}
@@ -179,7 +178,7 @@ const Groups = () => {
                             <TrendingUp className="w-4 h-4 text-highlight animate-bounce-soft" />
                           )}
                         </CardTitle>
-                        <Badge variant="secondary" className="mt-1 text-xs transition-all duration-200 group-hover:scale-105">
+                        <Badge className="mt-1 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm transition-all duration-200 group-hover:scale-105">
                           {group.category}
                         </Badge>
                       </div>
@@ -221,12 +220,12 @@ const Groups = () => {
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-lg transition-colors duration-200 group-hover:text-primary">{group.name}</h3>
                             {group.unreadMessages > 0 && (
-                              <Badge variant="destructive" className="text-xs animate-pulse">
+                              <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm animate-pulse">
                                 {group.unreadMessages}
                               </Badge>
                             )}
                           </div>
-                          <Badge variant="secondary" className="mb-2 text-xs transition-all duration-200 group-hover:scale-105">
+                          <Badge className="mb-2 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm transition-all duration-200 group-hover:scale-105">
                             {group.category}
                           </Badge>
                           <p className="text-muted-foreground text-sm mb-2 transition-colors duration-200 group-hover:text-foreground/80">

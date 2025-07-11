@@ -46,9 +46,11 @@ const Signup = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">A</span>
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="AuraLink Logo" 
+              className="w-12 h-12"
+            />
             <span className="text-3xl font-bold text-foreground">AuraLink</span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>
@@ -56,7 +58,7 @@ const Signup = () => {
         </div>
 
         {/* Signup Form */}
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
           <CardHeader>
             <CardTitle>Sign Up</CardTitle>
           </CardHeader>
@@ -160,7 +162,7 @@ const Signup = () => {
 
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90" 
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -179,7 +181,7 @@ const Signup = () => {
                 Already have an account?{" "}
                 <Link 
                   to="/login" 
-                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                  className="text-primary hover:text-accent font-medium transition-all duration-200 hover:scale-105 hover:font-bold"
                 >
                   Sign in
                 </Link>
