@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { supabase } from '@/lib/supabaseClient';
+
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,15 +15,24 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
-      window.location.href = "/dashboard";
-    }, 1000);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    setIsLoading(false)
+
+    if (error) {
+      // Show the user a friendly error
+      alert(error.message)
+    } else {
+      // Redirect on success (or you could use router.navigate)
+      window.location.href = '/dashboard'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-6">
