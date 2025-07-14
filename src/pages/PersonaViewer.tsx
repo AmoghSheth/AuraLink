@@ -1,41 +1,136 @@
-
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, UserPlus, MessageCircle, Gift, Share2, Shield } from "lucide-react";
+import { ArrowLeft, UserPlus, MessageCircle, Gift, Share2, Shield, Music, Film, Book, Podcast, ShoppingBag, Utensils, RefreshCw } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import QlooService from "@/lib/qloo";
+
+// Define the types for our user and Qloo data
+interface UserProfile {
+  id: string;
+  full_name: string;
+  age: number;
+  bio: string;
+  interests: string[];
+  values: string[];
+  lifestyle: string[];
+  qloo_persona?: {
+    data: {
+      domain: string;
+      results: { name: string; image_url?: string }[];
+    }[];
+  };
+}
+
+interface QlooRecommendation {
+  id: string;
+  name: string;
+  image_url?: string;
+  score?: number;
+}
 
 const PersonaViewer = () => {
-  const { id } = useParams();
-  
-  // Mock user data - in real app would fetch by ID
-  const user = {
-    id: "2",
-    name: "Holly Patterson",
-    age: 28,
-    bio: "Outdoor enthusiast who loves hiking, rock climbing, and discovering hidden gems in nature. Passionate about sustainable living and capturing the beauty of the world through photography. Always planning the next adventure and looking for fellow explorers to share the journey.",
-    tags: ["hiking", "rock climbing", "photography", "sustainable living", "outdoor adventures", "nature", "travel", "camping"],
-    visibility: "public" as const,
-    mutualFriends: 3,
-    friendSince: null,
-    joinedDate: "March 2024",
-    location: "San Francisco, CA",
-    interests: {
-      "Outdoor Activities": ["Hiking", "Rock Climbing", "Camping", "Trail Running"],
-      "Creative": ["Photography", "Nature Writing", "Landscape Art"],
-      "Lifestyle": ["Sustainable Living", "Minimalism", "Eco-friendly Products"],
-      "Travel": ["National Parks", "Backpacking", "Adventure Travel"]
-    },
-    values: ["Sustainability", "Authenticity", "Adventure", "Mindfulness"],
-    recentActivities: [
-      "Joined group: Bay Area Hikers",
-      "Shared photo from Yosemite trip",
-      "Added new interest: Rock Climbing"
-    ]
+  const { id } = useParams<{ id: string }>();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [qlooRecommendations, setQlooRecommendations] = useState<{ domain: string; results: QlooRecommendation[] }[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!id) {
+        setError("No user ID provided.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("users")
+          .select("*, qloo_persona:qloo_persona->data")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+        setUser(data);
+      } catch (err: any) {
+        setError(err.message);
+        console.error("Error fetching user:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [id]);
+
+  const fetchQlooRecommendations = async () => {
+    if (!user) return;
+
+    setLoadingRecommendations(true);
+    try {
+      const recommendations = await QlooService.getMultiDomainRecommendations(
+        user.interests,
+        user.values,
+        user.lifestyle
+      );
+      
+      setQlooRecommendations(recommendations);
+      
+      // Optionally save to database
+      await supabase
+        .from("users")
+        .update({
+          qloo_persona: {
+            data: recommendations,
+            updated_at: new Date().toISOString()
+          }
+        })
+        .eq("id", user.id);
+        
+    } catch (error) {
+      console.error("Error fetching Qloo recommendations:", error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
   };
 
-  const isOwnProfile = false; // Would check against current user
-  const isFriend = false; // Would check friend status
+  // Auto-fetch recommendations when user is loaded
+  useEffect(() => {
+    if (user && !user.qloo_persona?.data) {
+      fetchQlooRecommendations();
+    }
+  }, [user]);
+
+  const getIconForDomain = (domain: string) => {
+    switch (domain) {
+      case "music": return <Music className="w-5 h-5 mr-2" />;
+      case "film": return <Film className="w-5 h-5 mr-2" />;
+      case "books": return <Book className="w-5 h-5 mr-2" />;
+      case "podcasts": return <Podcast className="w-5 h-5 mr-2" />;
+      case "fashion": return <ShoppingBag className="w-5 h-5 mr-2" />;
+      case "dining": return <Utensils className="w-5 h-5 mr-2" />;
+      default: return null;
+    }
+  };
+
+  if (loading) return <div className="text-center p-10">Loading profile...</div>;
+  if (error) return <div className="text-center p-10 text-red-500">Error: {error}</div>;
+  if (!user) return <div className="text-center p-10">User not found.</div>;
+
+  // Mock data for parts not yet in DB
+  const isOwnProfile = false;
+  const isFriend = false;
+  const mutualFriends = 3;
+
+  // Use live recommendations if available, otherwise fall back to stored data
+  const displayRecommendations = qlooRecommendations.length > 0 
+    ? qlooRecommendations 
+    : user.qloo_persona?.data || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,11 +144,7 @@ const PersonaViewer = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <img 
-                src="/logo.png" 
-                alt="AuraLink Logo" 
-                className="w-10 h-10"
-              />
+              <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
               <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
@@ -69,62 +160,23 @@ const PersonaViewer = () => {
               <CardContent className="p-6">
                 <div className="flex items-start gap-6">
                   <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-2xl">
-                    H
+                    {user.full_name.charAt(0)}
                   </div>
-                  
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h1 className="text-3xl font-display font-bold text-foreground mb-1 tracking-tight-pro">{user.name}</h1>
-                        <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                          <span>{user.age} years old</span>
-                          <span>•</span>
-                          <span>{user.location}</span>
-                          <span>•</span>
-                          <span>Joined {user.joinedDate}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <Shield className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground capitalize">{user.visibility}</span>
-                      </div>
+                    <h1 className="text-3xl font-display font-bold text-foreground mb-1 tracking-tight-pro">{user.full_name}</h1>
+                    <div className="flex items-center gap-3 text-muted-foreground text-sm mb-3">
+                      <span>{user.age} years old</span>
                     </div>
-
-                    <p className="text-muted-foreground leading-relaxed mb-4">
-                      {user.bio}
-                    </p>
-
-                    {user.mutualFriends > 0 && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
-                          {user.mutualFriends} mutual friends
-                        </Badge>
-                      </div>
-                    )}
-
+                    <p className="text-muted-foreground leading-relaxed mb-4">{user.bio}</p>
                     {!isOwnProfile && (
                       <div className="flex gap-3">
                         {!isFriend ? (
-                          <Button>
-                            <UserPlus className="w-4 h-4 mr-2" />
-                            Add Friend
-                          </Button>
+                          <Button><UserPlus className="w-4 h-4 mr-2" />Add Friend</Button>
                         ) : (
-                          <Button>
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Message
-                          </Button>
+                          <Button><MessageCircle className="w-4 h-4 mr-2" />Message</Button>
                         )}
-                        <Button variant="outline" asChild>
-                          <Link to="/gift">
-                            <Gift className="w-4 h-4 mr-2" />
-                            Send Gift
-                          </Link>
-                        </Button>
-                        <Button variant="outline">
-                          <Share2 className="w-4 h-4" />
-                        </Button>
+                        <Button variant="outline" asChild><Link to="/gift"><Gift className="w-4 h-4 mr-2" />Send Gift</Link></Button>
+                        <Button variant="outline"><Share2 className="w-4 h-4" /></Button>
                       </div>
                     )}
                   </div>
@@ -132,41 +184,75 @@ const PersonaViewer = () => {
               </CardContent>
             </Card>
 
-            {/* Interests by Category */}
+            {/* Qloo Persona Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Interests & Passions</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>AI-Generated Persona (Qloo Taste AI™)</CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchQlooRecommendations}
+                    disabled={loadingRecommendations}
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${loadingRecommendations ? 'animate-spin' : ''}`} />
+                    {loadingRecommendations ? 'Updating...' : 'Refresh'}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(user.interests).map(([category, items]) => (
-                    <div key={category}>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-2 uppercase tracking-wide">
-                        {category}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {items.map((item) => (
-                          <Badge key={item} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
-                            {item}
-                          </Badge>
-                        ))}
+                {loadingRecommendations && displayRecommendations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Generating personalized recommendations...</p>
+                  </div>
+                ) : displayRecommendations.length > 0 ? (
+                  <div className="space-y-4">
+                    {displayRecommendations.map((domainData) => (
+                      <div key={domainData.domain}>
+                        <h3 className="font-medium text-sm text-muted-foreground mb-2 uppercase tracking-wide flex items-center">
+                          {getIconForDomain(domainData.domain)} {domainData.domain}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {domainData.results.map((item, idx) => {
+                            // Type guard for score
+                            const hasScore = typeof (item as any).score !== 'undefined';
+                            return (
+                            <Badge 
+                                key={item.name + idx}
+                              className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm"
+                                title={hasScore ? `Score: ${(item as any).score}` : undefined}
+                            >
+                              {item.name}
+                            </Badge>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No recommendations generated yet.</p>
+                    <Button onClick={fetchQlooRecommendations} disabled={loadingRecommendations}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Generate Recommendations
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Core Values */}
+            {/* Interests & Values */}
             <Card>
               <CardHeader>
-                <CardTitle>Core Values</CardTitle>
+                <CardTitle>Interests & Values</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {user.values.map((value) => (
-                    <Badge key={value} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
-                      {value}
+                <div className="flex flex-wrap gap-2">
+                  {[...user.interests, ...user.values, ...user.lifestyle].map((tag) => (
+                    <Badge key={tag} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3 py-1 text-sm">
+                      {tag}
                     </Badge>
                   ))}
                 </div>
@@ -183,94 +269,27 @@ const PersonaViewer = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {user.tags.length}
-                  </div>
+                  <div className="text-2xl font-bold text-primary">{user.interests.length}</div>
                   <p className="text-sm text-muted-foreground">Interests</p>
                 </div>
-                
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">3</div>
-                  <p className="text-sm text-muted-foreground">Groups</p>
+                  <div className="text-2xl font-bold text-accent">{user.values.length}</div>
+                  <p className="text-sm text-muted-foreground">Values</p>
                 </div>
-
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-highlight">47</div>
-                  <p className="text-sm text-muted-foreground">Connections</p>
+                  <div className="text-2xl font-bold text-highlight">{user.lifestyle.length}</div>
+                  <p className="text-sm text-muted-foreground">Lifestyle</p>
                 </div>
+                {displayRecommendations.length > 0 && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {displayRecommendations.reduce((acc, domain) => acc + domain.results.length, 0)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">AI Recommendations</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {user.recentActivities.map((activity, index) => (
-                    <div key={index} className="text-sm">
-                      <div className="flex items-start gap-2">
-                        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                        <p className="text-muted-foreground">{activity}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Mutual Connections */}
-            {user.mutualFriends > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mutual Friends</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* Mock mutual friends */}
-                    {["Alex Morgan", "Emma Chen", "Jordan Smith"].slice(0, user.mutualFriends).map((friend) => (
-                      <div key={friend} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-primary font-semibold text-xs">
-                            {friend.charAt(0)}
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">{friend}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="ghost" className="w-full mt-3 text-xs">
-                    View all mutual friends
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Compatibility Score */}
-            {!isOwnProfile && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Compatibility</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">78%</div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Based on shared interests and values
-                  </p>
-                  <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground">Shared interests:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {["photography", "sustainability", "outdoor adventures"].map((shared) => (
-                        <Badge key={shared} className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
-                          {shared}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

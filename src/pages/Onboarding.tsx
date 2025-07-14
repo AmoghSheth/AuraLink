@@ -6,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowLeft, Sparkles, Upload } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
-  
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     photo: null as File | null,
     age: "",
@@ -69,12 +72,116 @@ const Onboarding = () => {
 
   const progress = (currentStep / totalSteps) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Generate PersonaCard and redirect to dashboard
-      window.location.href = "/dashboard";
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("You are not logged in.");
+        setIsLoading(false);
+        navigate('/login');
+        return;
+      }
+
+      // 1. Save initial user data to Supabase
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          age: formData.age ? parseInt(formData.age, 10) : null,
+          bio: formData.bio,
+          interests: formData.interests,
+          "values": formData.values,
+          lifestyle: formData.lifestyle,
+          onboarding_completed: true,
+        })
+        .eq("id", user.id);
+
+      if (updateError) {
+        setIsLoading(false);
+        console.error("Error updating user profile:", updateError);
+        alert(`Failed to save your profile: ${updateError.message}`);
+        return;
+      }
+
+              // 2. Call OpenAI API to generate persona from all collected user data
+      try {
+        const allUserData = {
+          age: formData.age,
+          bio: formData.bio,
+          interests: formData.interests,
+          values: formData.values,
+          lifestyle: formData.lifestyle,
+        };
+
+        const openAIPrompt = `
+          You are an expert in human personality and connection. Based on the detailed user profile below, create an insightful and engaging "Persona Card". 
+          This card should be a short, vibrant paragraph (3-5 sentences) that captures the user's essence, making them sound like a real, interesting person someone would want to meet.
+
+          Instructions:
+          1.  **Synthesize, Don't Just List:** Do not just list the interests. Weave them into a narrative about the user's personality.
+          2.  **Infer Personality:** What do their choices say about them? Are they adventurous, creative, a homebody, intellectual?
+          3.  **Suggest Connection:** Briefly mention what they might be looking for in a friend or partner.
+          4.  **Propose an Activity:** Suggest a fun, creative activity that aligns with their profile.
+          5.  **Tone:** Make it sound warm, authentic, and appealing.
+
+          **User Profile to Analyze:**
+          - **Age:** ${allUserData.age}
+          - _
+          - **Bio:** "${allUserData.bio}"
+          - **Core Interests:** ${allUserData.interests.join(', ')}
+          - **Guiding Values:** ${allUserData.values.join(', ')}
+          - **Lifestyle:** ${allUserData.lifestyle.join(', ')}
+        `;
+
+        const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4-turbo",
+            messages: [{ role: "user", content: openAIPrompt }],
+            max_tokens: 250,
+            temperature: 0.75, // Slightly higher for more creative, less robotic text
+            top_p: 0.9,
+          }),
+        });
+
+        if (!openAIResponse.ok) {
+          const errorText = await openAIResponse.text();
+          throw new Error(`OpenAI API request failed: ${errorText}`);
+        }
+
+        const openAIData = await openAIResponse.json();
+        const personaText = openAIData.choices[0].message.content.trim();
+
+        // 3. Save the OpenAI-generated persona to Supabase
+        const { error: finalUpdateError } = await supabase
+          .from('users')
+          .update({ 
+            openai_persona: personaText,
+            qloo_persona: null, // Ensure Qloo data is cleared if it existed before
+          })
+          .eq('id', user.id);
+
+        if (finalUpdateError) {
+          throw new Error(`Failed to save persona data: ${finalUpdateError.message}`);
+        }
+
+        // On success, navigate to dashboard
+        setIsLoading(false);
+        navigate("/dashboard");
+
+      } catch (error) {
+        setIsLoading(false);
+        console.error("Error during persona generation:", error);
+        alert(error instanceof Error ? error.message : "An unknown error occurred.");
+        // On error, user stays on the page and can retry
+      }
     }
   };
 
@@ -299,12 +406,19 @@ const Onboarding = () => {
                 Back
               </Button>
 
-              <Button onClick={handleNext}>
+              <Button onClick={handleNext} disabled={isLoading}>
                 {currentStep === totalSteps ? (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Create PersonaCard
-                  </>
+                  isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Create PersonaCard
+                    </>
+                  )
                 ) : (
                   <>
                     Next
