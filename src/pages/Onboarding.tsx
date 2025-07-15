@@ -18,6 +18,7 @@ const Onboarding = () => {
 
   const [formData, setFormData] = useState({
     photo: null as File | null,
+    username: "",
     age: "",
     bio: "",
     interests: [] as string[],
@@ -86,10 +87,25 @@ const Onboarding = () => {
         return;
       }
 
+      // Fetch user's full name from the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        setIsLoading(false);
+        console.error("Error fetching user's name:", userError);
+        alert("Could not fetch your profile information to generate a persona.");
+        return;
+      }
+
       // 1. Save initial user data to Supabase
       const { error: updateError } = await supabase
         .from("users")
         .update({
+          username: formData.username,
           age: formData.age ? parseInt(formData.age, 10) : null,
           bio: formData.bio,
           interests: formData.interests,
@@ -102,13 +118,20 @@ const Onboarding = () => {
       if (updateError) {
         setIsLoading(false);
         console.error("Error updating user profile:", updateError);
-        alert(`Failed to save your profile: ${updateError.message}`);
+        // Check for unique constraint violation
+        if (updateError.code === '23505') {
+          alert("Username is already taken. Please choose another one.");
+          setCurrentStep(1); // Go back to the first step
+        } else {
+          alert(`Failed to save your profile: ${updateError.message}`);
+        }
         return;
       }
 
               // 2. Call OpenAI API to generate persona from all collected user data
       try {
         const allUserData = {
+          name: userData.full_name,
           age: formData.age,
           bio: formData.bio,
           interests: formData.interests,
@@ -117,8 +140,8 @@ const Onboarding = () => {
         };
 
         const openAIPrompt = `
-          You are an expert in human personality and connection. Based on the detailed user profile below, create an insightful and engaging "Persona Card". 
-          This card should be a short, vibrant paragraph (3-5 sentences) that captures the user's essence, making them sound like a real, interesting person someone would want to meet.
+          You are an expert in human personality and connection. Based on the detailed user profile for a person named ${allUserData.name}, create an insightful and engaging "Persona Card". 
+          This card should be a short, vibrant paragraph (3-5 sentences) that captures their essence, making them sound like a real, interesting person someone would want to meet.
 
           Instructions:
           1.  **Synthesize, Don't Just List:** Do not just list the interests. Weave them into a narrative about the user's personality.
@@ -128,6 +151,7 @@ const Onboarding = () => {
           5.  **Tone:** Make it sound warm, authentic, and appealing.
 
           **User Profile to Analyze:**
+          - **Name:** ${allUserData.name}
           - **Age:** ${allUserData.age}
           - _
           - **Bio:** "${allUserData.bio}"
@@ -242,6 +266,17 @@ const Onboarding = () => {
                 </div>
 
                 <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Choose a unique username"
+                      value={formData.username}
+                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                    />
+                  </div>
+
                   <div>
                     <Label htmlFor="age">Age</Label>
                     <Input
