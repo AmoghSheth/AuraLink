@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,13 +37,17 @@ interface Activity {
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
+  const [recentMatches, setRecentMatches] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
+  const [loadingMatches, setLoadingMatches] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       setLoadingFeed(true);
+      setLoadingMatches(true);
+
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
@@ -73,27 +78,49 @@ const Dashboard = () => {
           setActivityFeed(activityData || []);
         }
         setLoadingFeed(false);
+
+        // Fetch recent matches
+        const { data: likedUsersData, error: likedUsersError } = await supabase
+          .from('match_history')
+          .select('target_username')
+          .eq('actor_username', profileData.username)
+          .eq('action', 'liked')
+          .order('created_at', { ascending: false })
+          .limit(2);
+
+        if (likedUsersError) {
+          console.error("Error fetching recent matches:", likedUsersError);
+        } else if (likedUsersData && likedUsersData.length > 0) {
+          const likedUsernames = likedUsersData.map(u => u.target_username);
+          const { data: matchesProfiles, error: matchesError } = await supabase
+            .from('users')
+            .select('*')
+            .in('username', likedUsernames);
+          
+          if (matchesError) {
+            console.error("Error fetching match profiles:", matchesError);
+          } else {
+            setRecentMatches(matchesProfiles || []);
+          }
+        }
+        setLoadingMatches(false);
+
       } else {
         setLoading(false);
         setLoadingFeed(false);
+        setLoadingMatches(false);
       }
     };
 
     fetchDashboardData();
   }, []);
 
-  // Mock data for other sections
-  const recentMatches = [
-    { id: "2", name: "Holly P", age: 28, tags: ["outdoor", "enthusiast"], visibility: "public" as const, mutualFriends: 2 },
-    { id: "3", name: "Alex M", age: 30, tags: ["indie music", "coffee", "books"], visibility: "friends" as const, mutualFriends: 5 },
-  ];
   const suggestedGroups = [
     { id: "1", name: "Ramen Lovers", members: 234, category: "Food" },
     { id: "2", name: "Indie Music NYC", members: 456, category: "Music" },
     { id: "3", name: "Sustainable Living", members: 789, category: "Lifestyle" },
   ];
 
-  // Create a user object for the PersonaCard
   const personaCardUser = userProfile ? {
     id: userProfile.id,
     username: userProfile.username,
@@ -110,15 +137,15 @@ const Dashboard = () => {
     switch (activity.type) {
       case 'new_friend':
         return (
-          <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:scale-[1.02] group">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center transition-all duration-200 hover:scale-110 group-hover:bg-primary-foreground">
-              <Users className="w-4 h-4 text-primary transition-colors duration-200 group-hover:text-primary" />
+          <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-primary" />
             </div>
             <div>
               <p className="text-sm font-medium">
                 <strong>{activity.metadata.actor_full_name || activity.actor_username}</strong> became friends with <strong>{activity.metadata.target_full_name || activity.target_username}</strong>.
               </p>
-              <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80">{timeAgo}</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
             </div>
           </div>
         );
@@ -129,16 +156,16 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50 transition-all duration-300">
+      <nav className="border-b bg-card/50 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <Link to="/dashboard" className="flex items-center gap-2 group">
+            <Link to="/dashboard" className="flex items-center gap-2">
               <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
-              <span className="text-2xl font-display font-bold text-foreground">AuraLink</span>
+              <span className="text-2xl font-bold">AuraLink</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/search"><Button variant="ghost" size="sm"><Search className="w-4 h-4 mr-2" />Search</Button></Link>
+              <Link to="/match"><Button variant="ghost" size="sm"><Sparkles className="w-4 h-4 mr-2" />Match</Button></Link>
               <Link to="/friends"><Button variant="ghost" size="sm"><Users className="w-4 h-4 mr-2" />Friends</Button></Link>
               <Link to="/gift"><Button variant="ghost" size="sm"><Gift className="w-4 h-4 mr-2" />Gift</Button></Link>
               <Link to="/settings"><Button variant="ghost" size="icon"><Settings className="w-4 h-4" /></Button></Link>
@@ -149,79 +176,49 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+          <h1 className="text-3xl font-bold mb-2">
             Welcome back, {loading ? '...' : userProfile?.full_name.split(' ')[0]}!
           </h1>
           <p className="text-muted-foreground">Here's what's happening in your network</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Your PersonaCard */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  Your PersonaCard
-                  <Button variant="outline" size="sm" asChild><Link to="/settings">Edit</Link></Button>
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Your PersonaCard</CardTitle></CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-8 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
+                {loading ? <Skeleton className="h-24 w-full" /> : personaCardUser ? <PersonaCard user={personaCardUser} showActions={false} /> : <p>Could not load profile.</p>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Recent Matches</CardTitle></CardHeader>
+              <CardContent>
+                {loadingMatches ? <div className="grid md:grid-cols-2 gap-4"><Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" /></div> : 
+                recentMatches.length > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {recentMatches.map((match) => (
+                      <div key={match.id}>
+                        <PersonaCard user={{...match, name: match.full_name, tags: match.interests}} variant="compact" />
+                      </div>
+                    ))}
                   </div>
-                ) : personaCardUser ? (
-                  <PersonaCard user={personaCardUser} showActions={false} />
                 ) : (
-                  <p>Could not load your profile. Please try again later.</p>
+                  <p className="text-muted-foreground text-sm text-center">You haven't liked anyone recently. Go find a match!</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Recent Matches */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">Recent Matches<Button variant="outline" size="sm" asChild><Link to="/match">Find More</Link></Button></CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {recentMatches.map((match) => (
-                    <div key={match.id}>
-                      <PersonaCard user={match} variant="compact" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Activity Feed */}
             <Card>
               <CardHeader><CardTitle>Activity Feed</CardTitle></CardHeader>
               <CardContent>
-                {loadingFeed ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : activityFeed.length > 0 ? (
-                  <div className="space-y-4">
-                    {activityFeed.map(renderActivity)}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No recent activity.</p>
-                  </div>
-                )}
+                {loadingFeed ? <div className="space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div> :
+                activityFeed.length > 0 ? <div className="space-y-4">{activityFeed.map(renderActivity)}</div> : <p className="text-muted-foreground text-sm text-center">No recent activity.</p>}
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
             <Card>
               <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
               <CardContent className="space-y-3">
@@ -231,23 +228,19 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Suggested Groups */}
             <Card>
               <CardHeader><CardTitle>Groups to Join</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {suggestedGroups.map((group) => (
-                    <div key={group.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div><p className="font-medium text-sm">{group.name}</p><p className="text-xs text-muted-foreground">{group.members} members</p></div>
-                      <Button size="sm" variant="outline">Join</Button>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="space-y-3">
+                {suggestedGroups.map((group) => (
+                  <div key={group.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div><p className="font-medium text-sm">{group.name}</p><p className="text-xs text-muted-foreground">{group.members} members</p></div>
+                    <Button size="sm" variant="outline">Join</Button>
+                  </div>
+                ))}
                 <Button variant="ghost" className="w-full mt-3" asChild><Link to="/groups">View All Groups</Link></Button>
               </CardContent>
             </Card>
 
-            {/* Friends Summary */}
             <Card>
               <CardHeader><CardTitle>Your Network</CardTitle></CardHeader>
               <CardContent>
