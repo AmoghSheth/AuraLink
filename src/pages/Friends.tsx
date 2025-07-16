@@ -163,9 +163,27 @@ const Friends = () => {
         throw new Error(`Could not add you to friend's list: ${targetUserUpdateError.message}`);
       }
 
+      // 4. Log the new friendship activity
+      const { error: activityError } = await supabase
+        .from('activity')
+        .insert({
+          type: 'new_friend',
+          actor_username: currentUserData.username,
+          target_username: targetUserData.username,
+          metadata: {
+            actor_full_name: currentUser.full_name,
+            target_full_name: targetUser.full_name,
+          }
+        });
+
+      if (activityError) {
+        // This is not a critical error, so we just log it and don't block the user
+        console.error("Failed to log new friend activity:", activityError);
+      }
+
       toast.success(`${targetUser.username} has been added as a friend!`, { id: addingToast });
       
-      // 4. Refresh UI
+      // 5. Refresh UI
       setFriends(prev => [...prev, targetUser]);
       setIsAddFriendDialogOpen(false);
       setSearchQuery("");
