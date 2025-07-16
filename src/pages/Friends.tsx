@@ -1,83 +1,196 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import PersonaCard from "@/components/PersonaCard";
 import { Link } from "react-router-dom";
-import { Users, Search, UserPlus, Gift, MessageCircle, ArrowLeft, Calendar } from "lucide-react";
+import { Users, Search, UserPlus, Gift, MessageCircle, ArrowLeft, Calendar, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+
+// Define the structure of a user profile
+interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  age: number;
+  bio: string;
+  interests: string[];
+  values: string[];
+  lifestyle: string[];
+  openai_persona: string;
+  friends?: string[]; // Array of usernames
+}
 
 const Friends = () => {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "requests">("all");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [rawSearchCount, setRawSearchCount] = useState(0);
+  const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
 
-  const friends = [
-    {
-      id: "2",
-      name: "Holly Patterson",
-      age: 28,
-      bio: "Outdoor enthusiast who loves hiking, photography, and discovering hidden gems.",
-      tags: ["hiking", "photography", "sustainable living", "outdoor adventures"],
-      visibility: "public" as const,
-      overlapScore: 78,
-      friendSince: "March 2024",
-      lastActive: "2 hours ago",
-      birthday: "April 15",
-    },
-    {
-      id: "3",
-      name: "Alex Morgan",
-      age: 30,
-      bio: "Coffee connoisseur and indie music lover. Always hunting for the next great cafe.",
-      tags: ["indie music", "coffee", "vinyl records", "local venues"],
-      visibility: "friends" as const,
-      overlapScore: 85,
-      friendSince: "January 2024",
-      lastActive: "1 day ago",
-      birthday: "June 22",
-    },
-    {
-      id: "4",
-      name: "Emma Chen",
-      age: 27,
-      bio: "Food blogger passionate about fusion cuisine and sustainable practices.",
-      tags: ["food blogging", "fusion cuisine", "sustainability", "cooking"],
-      visibility: "public" as const,
-      overlapScore: 72,
-      friendSince: "February 2024",
-      lastActive: "3 hours ago",
-      birthday: "September 8",
-    },
-  ];
+  // Fetch current user and their friends' profiles
+  const fetchFriends = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-  const friendRequests = [
-    {
-      id: "5",
-      name: "Jordan Smith",
-      age: 29,
-      tags: ["indie music", "vinyl records", "coffee"],
-      visibility: "public" as const,
-      mutualFriends: 3,
-    },
-    {
-      id: "6",
-      name: "Maya Patel", 
-      age: 26,
-      tags: ["yoga", "sustainability", "meditation"],
-      visibility: "friends" as const,
-      mutualFriends: 2,
-    },
-  ];
+    try {
+      // 1. Get the current logged-in user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error("You must be logged in to view friends.");
 
-  const upcomingBirthdays = friends.filter(friend => {
-    // Mock logic - in real app would check actual dates
-    return friend.birthday.includes("April") || friend.birthday.includes("June");
-  });
+      // 2. Fetch the current user's profile from the 'users' table
+      const { data: currentUserProfile, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      if (profileError || !currentUserProfile) throw new Error("Could not fetch your user profile.");
+      setCurrentUser(currentUserProfile);
 
-  const filteredFriends = friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    friend.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      // 3. If the user has friends, fetch their full profiles
+      const friendUsernames = currentUserProfile.friends || [];
+      if (friendUsernames.length > 0) {
+        const { data: friendsProfiles, error: friendsError } = await supabase
+          .from("users")
+          .select("*")
+          .in("username", friendUsernames);
+
+        if (friendsError) throw new Error("Could not fetch friends' profiles.");
+        setFriends(friendsProfiles || []);
+      } else {
+        setFriends([]);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
+
+  // Handle searching for new users to add as friends
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    if (!currentUser) return;
+
+    setIsSearching(true);
+    setRawSearchCount(0);
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .ilike("username", `%${searchQuery}%`)
+        // Exclude current user from search
+        .neq("id", currentUser.id);
+
+      if (error) throw error;
+      
+      setRawSearchCount(data.length);
+
+      // Exclude users who are already friends
+      const existingFriendUsernames = friends.map(f => f.username);
+      const filteredResults = data.filter(u => !existingFriendUsernames.includes(u.username));
+      
+      setSearchResults(filteredResults);
+    } catch (err: any) {
+      toast.error(`Search failed: ${err.message}`);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Add a new friend
+  const addFriend = async (targetUser: UserProfile) => {
+    if (!currentUser) return;
+
+    const addingToast = toast.loading(`Adding ${targetUser.username} as a friend...`);
+
+    try {
+      // 1. Get the most recent friend lists for both users to avoid race conditions
+      const { data: usersData, error: fetchError } = await supabase
+        .from('users')
+        .select('id, username, friends')
+        .in('id', [currentUser.id, targetUser.id]);
+
+      if (fetchError) {
+        throw new Error(`Supabase error verifying profiles: ${fetchError.message}`);
+      }
+      if (!usersData || usersData.length < 2) {
+        throw new Error(`Could not verify user profiles for friending. Expected 2 profiles, but found ${usersData?.length || 0}. This might be an RLS issue.`);
+      }
+
+      const currentUserData = usersData.find(u => u.id === currentUser.id)!;
+      const targetUserData = usersData.find(u => u.id === targetUser.id)!;
+
+      // 2. Update current user's friend list
+      const currentUserFriends = Array.from(new Set([...(currentUserData.friends || []), targetUserData.username]));
+      const { error: currentUserUpdateError } = await supabase
+        .from("users")
+        .update({ friends: currentUserFriends })
+        .eq("id", currentUser.id);
+      if (currentUserUpdateError) throw new Error(`Could not add friend to your list: ${currentUserUpdateError.message}`);
+
+      // 3. Update target user's friend list
+      const targetUserFriends = Array.from(new Set([...(targetUserData.friends || []), currentUserData.username]));
+      const { error: targetUserUpdateError } = await supabase
+        .from("users")
+        .update({ friends: targetUserFriends })
+        .eq("id", targetUser.id);
+      if (targetUserUpdateError) {
+        // Attempt to roll back the change on the current user for consistency
+        await supabase.from("users").update({ friends: currentUserData.friends }).eq("id", currentUser.id);
+        throw new Error(`Could not add you to friend's list: ${targetUserUpdateError.message}`);
+      }
+
+      toast.success(`${targetUser.username} has been added as a friend!`, { id: addingToast });
+      
+      // 4. Refresh UI
+      setFriends(prev => [...prev, targetUser]);
+      setIsAddFriendDialogOpen(false);
+      setSearchQuery("");
+      setSearchResults([]);
+
+    } catch (err: any) {
+      toast.error(err.message, { id: addingToast });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-red-500">
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,11 +204,7 @@ const Friends = () => {
               </Button>
             </Link>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <img 
-                src="/logo.png" 
-                alt="AuraLink Logo" 
-                className="w-10 h-10"
-              />
+              <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
               <span className="text-xl font-display font-bold text-foreground tracking-tight-pro">AuraLink</span>
             </Link>
           </div>
@@ -103,233 +212,101 @@ const Friends = () => {
       </nav>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">Friends</h1>
-                <p className="text-muted-foreground">
-                  {friends.length} connections • {friends.reduce((sum, f) => sum + f.overlapScore, 0) / friends.length}% avg compatibility
-                </p>
-              </div>
-              <Button className="flex items-center gap-2">
-                <UserPlus className="w-4 h-4" />
-                Add Friend
-              </Button>
+        <div className="lg:col-span-3 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-display font-bold text-foreground mb-2 tracking-tight-pro">Friends</h1>
+              <p className="text-muted-foreground">
+                {friends.length} connection{friends.length !== 1 && 's'}
+              </p>
             </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 bg-muted rounded-lg p-1">
-              <button
-                onClick={() => setActiveTab("all")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "all"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                All Friends ({friends.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("requests")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === "requests"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Requests ({friendRequests.length})
-              </button>
-            </div>
-
-            {activeTab === "all" ? (
-              <div className="space-y-6">
-                {/* Search */}
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-                        placeholder="Search friends by name or interests..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Friends Grid */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {filteredFriends.map((friend) => (
-                    <Card key={friend.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-0">
-                        <PersonaCard user={friend} showActions={false} />
-                        
-                        {/* Friend Details */}
-                        <div className="p-4 border-t bg-muted/20">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>Friends since {friend.friendSince}</span>
-                              <span>•</span>
-                              <span>Active {friend.lastActive}</span>
-                            </div>
-                            <Badge className="bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm">
-                              {friend.overlapScore}% match
-                            </Badge>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <Button size="sm" className="flex-1">
-                              <MessageCircle className="w-4 h-4 mr-1" />
-                              Message
-                            </Button>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link to="/gift">
-                                <Gift className="w-4 h-4" />
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+            <Dialog open={isAddFriendDialogOpen} onOpenChange={setIsAddFriendDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Add Friend
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a New Friend</DialogTitle>
+                  <DialogDescription>
+                    Search for users by their username to add them to your network.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter a username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <Button onClick={handleSearch} disabled={isSearching}>
+                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  </Button>
                 </div>
-
-                {filteredFriends.length === 0 && searchQuery && (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No friends found</h3>
-                      <p className="text-muted-foreground">
-                        Try a different search term
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              /* Friend Requests */
-              <div className="space-y-4">
-                {friendRequests.map((request) => (
-                  <Card key={request.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-1">
-                          <PersonaCard user={request} showActions={false} variant="compact" />
+                <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+                  {searchResults.length > 0 ? (
+                    searchResults.map(user => (
+                      <div key={user.id} className="flex items-center justify-between p-2 rounded-md border">
+                        <div>
+                          <p className="font-semibold">{user.username}</p>
+                          <p className="text-sm text-muted-foreground">{user.full_name}</p>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <Button size="sm">Accept</Button>
-                          <Button size="sm" variant="outline">Decline</Button>
-                        </div>
+                        <Button size="sm" onClick={() => addFriend(user)}>Add</Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {friendRequests.length === 0 && (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <UserPlus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No pending requests</h3>
-                      <p className="text-muted-foreground">
-                        Friend requests will appear here
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {isSearching && "Searching..."}
+                      {!isSearching && searchResults.length === 0 && rawSearchCount > 0 && "User is already your friend."}
+                      {!isSearching && searchResults.length === 0 && rawSearchCount === 0 && "No users found. Check the username and try again."}
+                    </p>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddFriendDialogOpen(false)}>Close</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Upcoming Birthdays */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="w-5 h-5" />
-                  Upcoming Birthdays
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {upcomingBirthdays.length > 0 ? (
-                  <div className="space-y-3">
-                    {upcomingBirthdays.map((friend) => (
-                      <div key={friend.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">
-                            {friend.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{friend.name}</p>
-                          <p className="text-xs text-muted-foreground">{friend.birthday}</p>
-                        </div>
+          {/* Friends Grid */}
+          {friends.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-6">
+              {friends.map((friend) => (
+                <Card key={friend.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-0">
+                    <PersonaCard user={friend} showActions={false} />
+                    <div className="p-4 border-t bg-muted/20">
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1">
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Message
+                        </Button>
                         <Button size="sm" variant="outline" asChild>
                           <Link to="/gift">
-                            <Gift className="w-3 h-3" />
+                            <Gift className="w-4 h-4" />
                           </Link>
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-4">
-                    No upcoming birthdays
-                  </p>
-                )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="text-center py-20">
+              <CardContent>
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Your Network is Empty</h3>
+                <p className="text-muted-foreground mb-6">
+                  Use the "Add Friend" button to start connecting with people.
+                </p>
               </CardContent>
             </Card>
-
-            {/* Friend Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Network Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{friends.length}</div>
-                  <p className="text-sm text-muted-foreground">Total Friends</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-accent">
-                    {Math.round(friends.reduce((sum, f) => sum + f.overlapScore, 0) / friends.length)}%
-                  </div>
-                  <p className="text-sm text-muted-foreground">Avg Compatibility</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-highlight">12</div>
-                  <p className="text-sm text-muted-foreground">Groups in Common</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/search">
-                    <Search className="w-4 h-4 mr-2" />
-                    Find New People
-                  </Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/groups">
-                    <Users className="w-4 h-4 mr-2" />
-                    Join Groups
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          )}
         </div>
       </div>
     </div>
