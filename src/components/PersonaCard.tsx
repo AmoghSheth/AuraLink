@@ -23,9 +23,10 @@ interface PersonaCardProps {
   user: PersonaCardUser;
   variant?: "default" | "compact";
   showActions?: boolean;
+  customActions?: React.ReactNode;
 }
 
-const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaCardProps) => {
+const PersonaCard = ({ user, variant = "default", showActions = true, customActions }: PersonaCardProps) => {
   const isCompact = variant === "compact";
 
   // Combine interests, values, and lifestyle into a single array for display
@@ -85,6 +86,7 @@ const PersonaCard = ({ user, variant = "default", showActions = true }: PersonaC
 
         {/* Actions */}
         {showActions && (
+          customActions ? <>{customActions}</> :
           <div className={`flex gap-2 ${isCompact ? 'pt-2' : 'pt-4'} opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0`}>
             <Button 
               size={isCompact ? "sm" : "default"} 

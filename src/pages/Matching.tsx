@@ -1,13 +1,15 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PersonaCard from "@/components/PersonaCard";
 import { Link } from "react-router-dom";
-import { Sparkles, MessageCircle, X, Heart, ArrowLeft, RefreshCw } from "lucide-react";
+import { Sparkles, MessageCircle, X, Heart, ArrowLeft, RefreshCw, Mail, Phone, Cake } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import ChatPopup from "@/components/ChatPopup";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Define the structure of a user profile
 interface UserProfile {
@@ -20,6 +22,9 @@ interface UserProfile {
   values: string[];
   lifestyle: string[];
   openai_persona: string;
+  email: string;
+  phone_number: string;
+  avatar_url: string;
 }
 
 // Define the structure for the AI-generated match details
@@ -39,6 +44,7 @@ const Matching = () => {
   const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
   const [isFinding, setIsFinding] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isChatPopupOpen, setChatPopupOpen] = useState(false);
 
   const shuffleArray = (array: any[]) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -117,25 +123,37 @@ const Matching = () => {
   const handleInteraction = async (action: 'liked' | 'passed') => {
     if (isFinding || !currentUser || !currentMatch) return;
 
-    // Log the interaction to Supabase
-    const { error } = await supabase.from('match_history').insert({
-      actor_username: currentUser.username,
-      target_username: currentMatch.username,
-      action: action,
-    });
-    if (error) {
-      // Non-critical error, just log it and move on
-      console.error(`Failed to log '${action}' action:`, error);
+    // If the action is 'liked', just open the chat popup.
+    if (action === 'liked') {
+      setChatPopupOpen(true);
+      return;
     }
-    
-    // Move to the next match
-    const nextIndex = currentMatchIndex + 1;
-    if (nextIndex < potentialMatches.length) {
-      setCurrentMatchIndex(nextIndex);
-      generateMatchDetails(potentialMatches[nextIndex], currentUser);
-    } else {
-      toast.info("You've seen everyone! Let's shuffle and start again.");
-      fetchAndProcessMatches();
+
+    // If the action is 'passed', log it and move to the next match.
+    if (action === 'passed') {
+      const { error } = await supabase.from('match_history').upsert(
+        {
+          actor_username: currentUser.username,
+          target_username: currentMatch.username,
+          action: 'passed',
+        },
+        {
+          onConflict: 'actor_username,target_username',
+        }
+      );
+
+      if (error) {
+        console.error(`Failed to log 'passed' action:`, error);
+      }
+
+      const nextIndex = currentMatchIndex + 1;
+      if (nextIndex < potentialMatches.length) {
+        setCurrentMatchIndex(nextIndex);
+        generateMatchDetails(potentialMatches[nextIndex], currentUser);
+      } else {
+        toast.info("You've seen everyone! Let's shuffle and start again.");
+        fetchAndProcessMatches();
+      }
     }
   };
 
@@ -199,7 +217,27 @@ const Matching = () => {
           </Card>
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={() => handleInteraction('passed')}><X className="w-4 h-4 mr-2" />Pass</Button>
-            <Button className="flex-1" onClick={() => handleInteraction('liked')}><MessageCircle className="w-4 h-4 mr-2" />Like & Chat</Button>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Button className="flex-1" onClick={() => handleInteraction('liked')}><MessageCircle className="w-4 h-4 mr-2" />Chat</Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <div className="flex justify-between space-x-4">
+                  <Avatar>
+                    <AvatarImage src={currentMatch.avatar_url} />
+                    <AvatarFallback>{currentMatch.full_name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold">{currentMatch.full_name}</h4>
+                    <div className="space-y-2 text-xs text-muted-foreground">
+                      <div className="flex items-center pt-1"><Mail className="mr-2 h-3 w-3" />{currentMatch.email || "No email"}</div>
+                      <div className="flex items-center pt-1"><Phone className="mr-2 h-3 w-3" />{currentMatch.phone_number || "No phone"}</div>
+                      <div className="flex items-center pt-1"><Cake className="mr-2 h-3 w-3" />{currentMatch.age} years old</div>
+                    </div>
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
         </div>
         <div className="space-y-6">
@@ -240,6 +278,20 @@ const Matching = () => {
           </div>
         )}
       </div>
+      {currentMatch && (
+        <ChatPopup
+          isOpen={isChatPopupOpen}
+          onClose={() => setChatPopupOpen(false)}
+          user={{
+            name: currentMatch.full_name,
+            avatarUrl: currentMatch.avatar_url || '',
+            email: currentMatch.email || 'No email provided',
+            phone: currentMatch.phone_number || 'No phone provided',
+            age: currentMatch.age,
+            conversationTips: matchDetails?.conversationStarters || ["Start with a simple 'Hello!'"]
+          }}
+        />
+      )}
     </div>
   );
 };
