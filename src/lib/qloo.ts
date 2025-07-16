@@ -42,13 +42,14 @@ class QlooService {
     const requestBody = {
       signal: {
         interests: {
+          filter: { type: 'keyword' },
           entities: allEntities.map(name => ({ name })),
         },
       },
       domain: [domain],
       limit: 8,
     };
-    const response = await this.makeRequest('recs', requestBody);
+    const response = await this.makeRequest('v2/recommendations', requestBody);
     // The response may have a structure like { results: [...] } or { [domain]: [...] }
     if (response.results) {
       return response.results;
@@ -66,13 +67,14 @@ class QlooService {
     const requestBody = {
       signal: {
         interests: {
+          filter: { type: 'keyword' },
           entities: allEntities.map(name => ({ name })),
         },
       },
       domain: domains,
       limit: 8,
     };
-    const response = await this.makeRequest('recs', requestBody);
+    const response = await this.makeRequest('v2/recommendations', requestBody);
     // The response is expected to be an object with keys for each domain
     return domains.map(domain => ({
           domain,

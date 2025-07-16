@@ -18,6 +18,7 @@ interface UserProfile {
   interests: string[];
   values: string[];
   lifestyle: string[];
+  friends: string[];
 }
 
 interface Activity {
@@ -251,7 +252,7 @@ const Dashboard = () => {
               <CardHeader><CardTitle>Your Network</CardTitle></CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-1">47</div>
+                  <div className="text-3xl font-bold text-primary mb-1">{userProfile?.friends?.length || 0}</div>
                   <p className="text-sm text-muted-foreground mb-4">Friends connected</p>
                   <Button variant="outline" className="w-full" asChild><Link to="/friends">View All Friends</Link></Button>
                 </div>
