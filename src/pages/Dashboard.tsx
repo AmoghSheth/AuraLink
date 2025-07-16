@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PersonaCard from "@/components/PersonaCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, Users, Sparkles, Gift, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from "sonner";
 
 // Define types for the data we expect
 interface UserProfile {
@@ -20,6 +21,9 @@ interface UserProfile {
   values: string[];
   lifestyle: string[];
   friends: string[];
+  email?: string;
+  phone_number?: string;
+  avatar_url?: string;
 }
 
 interface Activity {
@@ -35,12 +39,17 @@ interface Activity {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
   const [recentMatches, setRecentMatches] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingMatches, setLoadingMatches] = useState(true);
+  
+  // New state for functionality
+  const [likedUsers, setLikedUsers] = useState<string[]>([]);
+  const [sentRequests, setSentRequests] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -62,6 +71,27 @@ const Dashboard = () => {
           console.error("Error fetching user profile:", profileError);
         } else if (profileData) {
           setUserProfile(profileData);
+          
+          // Fetch existing likes and friend requests
+          const [likedData, requestsData] = await Promise.all([
+            supabase
+              .from('match_history')
+              .select('target_username')
+              .eq('actor_username', profileData.username)
+              .eq('action', 'liked'),
+            supabase
+              .from('friend_requests')
+              .select('to_user_username')
+              .eq('from_user_username', profileData.username)
+              .eq('status', 'pending')
+          ]);
+          
+          if (likedData.data) {
+            setLikedUsers(likedData.data.map(u => u.target_username));
+          }
+          if (requestsData.data) {
+            setSentRequests(requestsData.data.map(r => r.to_user_username));
+          }
         }
         setLoading(false);
 
@@ -132,6 +162,105 @@ const Dashboard = () => {
     lifestyle: userProfile.lifestyle,
   } : null;
 
+  // Action handlers for PersonaCard buttons
+  const handleChatClick = (user: UserProfile) => {
+    navigate(`/chats/${user.id}`);
+  };
+
+  const handleLike = async (user: UserProfile) => {
+    if (!userProfile) return;
+    
+    // Check if already liked
+    if (likedUsers.includes(user.username)) {
+      toast.info(`You already liked ${user.full_name}!`, {
+        description: "You've already shown interest in this person."
+      });
+      return;
+    }
+
+    const toastId = toast.loading(`Liking ${user.full_name}...`);
+    try {
+      const { error } = await supabase.from('match_history').insert({
+        actor_username: userProfile.username,
+        target_username: user.username,
+        action: 'liked',
+      });
+
+      if (error) throw error;
+
+      setLikedUsers(prev => [...prev, user.username]);
+      toast.success(`You liked ${user.full_name}!`, { 
+        id: toastId,
+        description: "They'll be notified of your interest. Keep exploring for more matches!"
+      });
+    } catch (error: any) {
+      toast.error(error.message, { id: toastId });
+    }
+  };
+
+  const handleAddFriend = async (user: UserProfile) => {
+    if (!userProfile) return;
+    
+    // Check if already friends
+    if (userProfile.friends?.includes(user.username)) {
+      toast.info(`You're already friends with ${user.full_name}!`, {
+        description: "You can message them anytime or view their full profile."
+      });
+      return;
+    }
+    
+    // Check if request already sent
+    if (sentRequests.includes(user.username)) {
+      toast.info(`Friend request already sent to ${user.full_name}!`, {
+        description: "Please wait for them to respond to your request."
+      });
+      return;
+    }
+
+    const toastId = toast.loading(`Sending friend request to ${user.full_name}...`);
+    try {
+      const { error } = await supabase.from('friend_requests').insert({
+        from_user_username: userProfile.username,
+        to_user_username: user.username,
+      });
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("Friend request already sent.");
+        }
+        throw new Error(error.message);
+      }
+
+      setSentRequests(prev => [...prev, user.username]);
+      toast.success(`Friend request sent to ${user.full_name}!`, { 
+        id: toastId,
+        description: "They'll receive your request and can accept or decline."
+      });
+    } catch (error: any) {
+      toast.error(error.message, { id: toastId });
+    }
+  };
+
+  const handleShare = async (user: UserProfile) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Check out ${user.full_name} on AuraLink`,
+          text: `Meet ${user.full_name}: ${user.openai_persona?.substring(0, 100)}...`,
+          url: `${window.location.origin}/persona/${user.id}`,
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(`${window.location.origin}/persona/${user.id}`);
+        toast.success(`Profile link copied to clipboard!`, {
+          description: "Share this link with friends to introduce them to this person."
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to share profile");
+    }
+  };
+
   const renderActivity = (activity: Activity) => {
     const timeAgo = formatDistanceToNow(new Date(activity.created_at), { addSuffix: true });
     switch (activity.type) {
@@ -199,7 +328,14 @@ const Dashboard = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     {recentMatches.map((match) => (
                       <div key={match.id}>
-                        <PersonaCard user={{...match, name: match.full_name, tags: match.interests}} variant="compact" />
+                        <PersonaCard 
+                          user={{...match, bio: match.openai_persona}} 
+                          variant="compact"
+                          onChatClick={handleChatClick}
+                          onLikeClick={handleLike}
+                          onShareClick={handleShare}
+                          onAddFriendClick={handleAddFriend}
+                        />
                       </div>
                     ))}
                   </div>
@@ -254,6 +390,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
 };

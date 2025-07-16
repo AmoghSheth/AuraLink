@@ -13,6 +13,7 @@ import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
 import GiftGenerator from "./pages/GiftGenerator";
 import Friends from "./pages/Friends";
+import Chats from "./pages/Chats";
 import PersonaViewer from "./pages/PersonaViewer";
 import Onboarding from "./pages/Onboarding";
 import Settings from "./pages/Settings";
@@ -84,6 +85,8 @@ const App = () => (
             <Route path="/groups/:id" element={<GroupDetail />} />
             <Route path="/gift" element={<GiftGenerator />} />
             <Route path="/friends" element={<Friends />} />
+            <Route path="/chats" element={<Chats />} />
+            <Route path="/chats/:userId" element={<Chats />} />
             <Route path="/persona/:id" element={<PersonaViewer />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
