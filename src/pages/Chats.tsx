@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,16 +6,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, 
-  Send, 
-  Smile, 
-  Paperclip, 
-  MoreVertical, 
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  ArrowLeft,
+  Send,
+  Smile,
+  Paperclip,
+  MoreVertical,
   Search,
   Info,
   Settings,
@@ -41,7 +47,7 @@ import {
   Calendar,
   Mail,
   Phone,
-  Users
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,7 +83,7 @@ interface Message {
   senderId: string;
   content: string;
   timestamp: string;
-  type: 'text' | 'image' | 'file';
+  type: "text" | "image" | "file";
   files?: AttachedFile[];
   isDelivered?: boolean;
   isSending?: boolean;
@@ -86,8 +92,11 @@ interface Message {
 const Chats = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedChat, setSelectedChat] = useState<string | null>(userId || null);
+  const [selectedChat, setSelectedChat] = useState<string | null>(
+    userId || null
+  );
   const [messageInput, setMessageInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -101,40 +110,44 @@ const Chats = () => {
       content: "Hey! How are you doing today?",
       timestamp: "10:30 AM",
       type: "text",
-      isDelivered: true
+      isDelivered: true,
     },
     {
       id: "2",
       senderId: "me",
-      content: "I'm doing great! Just finished a really interesting book. How about you?",
+      content:
+        "I'm doing great! Just finished a really interesting book. How about you?",
       timestamp: "10:32 AM",
       type: "text",
-      isDelivered: true
+      isDelivered: true,
     },
     {
       id: "3",
       senderId: "other",
-      content: "That's awesome! What book was it? I'm always looking for good recommendations 📚",
+      content:
+        "That's awesome! What book was it? I'm always looking for good recommendations 📚",
       timestamp: "10:35 AM",
       type: "text",
-      isDelivered: true
+      isDelivered: true,
     },
     {
       id: "4",
       senderId: "me",
-      content: "It was 'Atomic Habits' by James Clear. Really changed my perspective on building good habits and breaking bad ones. Highly recommend it!",
+      content:
+        "It was 'Atomic Habits' by James Clear. Really changed my perspective on building good habits and breaking bad ones. Highly recommend it!",
       timestamp: "10:38 AM",
       type: "text",
-      isDelivered: true
+      isDelivered: true,
     },
     {
       id: "5",
       senderId: "other",
-      content: "That sounds like a great idea! I'd love to join you for hiking this weekend.",
+      content:
+        "That sounds like a great idea! I'd love to join you for hiking this weekend.",
       timestamp: "2 min ago",
       type: "text",
-      isDelivered: true
-    }
+      isDelivered: true,
+    },
   ]);
 
   // Mock data for styling purposes - enhanced with more details
@@ -144,7 +157,8 @@ const Chats = () => {
       name: "Sarah Johnson",
       username: "sarah_j",
       avatar: "",
-      lastMessage: "That sounds like a great idea! I'd love to join you for hiking this weekend.",
+      lastMessage:
+        "That sounds like a great idea! I'd love to join you for hiking this weekend.",
       timestamp: "2 min ago",
       unreadCount: 2,
       isOnline: true,
@@ -154,10 +168,10 @@ const Chats = () => {
       location: "San Francisco, CA",
       joinedDate: "March 2023",
       email: "sarah.johnson@email.com",
-      phone: "+1 (555) 123-4567"
+      phone: "+1 (555) 123-4567",
     },
     {
-      id: "2", 
+      id: "2",
       name: "Mike Chen",
       username: "mike_c",
       avatar: "",
@@ -171,7 +185,7 @@ const Chats = () => {
       location: "Seattle, WA",
       joinedDate: "January 2023",
       email: "mike.chen@email.com",
-      phone: "+1 (555) 987-6543"
+      phone: "+1 (555) 987-6543",
     },
     {
       id: "3",
@@ -187,7 +201,7 @@ const Chats = () => {
       mutualFriends: 15,
       location: "Austin, TX",
       joinedDate: "February 2023",
-      email: "alex.rodriguez@email.com"
+      email: "alex.rodriguez@email.com",
     },
     {
       id: "4",
@@ -203,7 +217,7 @@ const Chats = () => {
       mutualFriends: 6,
       location: "Nashville, TN",
       joinedDate: "April 2023",
-      email: "emma.wilson@email.com"
+      email: "emma.wilson@email.com",
     },
     {
       id: "5",
@@ -220,18 +234,70 @@ const Chats = () => {
       location: "Los Angeles, CA",
       joinedDate: "May 2023",
       email: "david.kim@email.com",
-      phone: "+1 (555) 456-7890"
-    }
+      phone: "+1 (555) 456-7890",
+    },
   ];
 
-  const currentChatUser = mockChats.find(chat => chat.id === selectedChat);
+  // Try to find the chat user in the mockChats list
+  let currentChatUser = mockChats.find((chat) => chat.id === selectedChat);
+
+  // If not found and userId is present, create a temporary ChatUser from location.state or fallback
+  if (!currentChatUser && userId) {
+    // Try to get user info from location.state (passed via navigation)
+    const stateUser = location.state?.user;
+    currentChatUser = stateUser
+      ? {
+          id: stateUser.id,
+          name: stateUser.name || stateUser.full_name || "New User",
+          username: stateUser.username || "",
+          avatar: stateUser.avatar || stateUser.avatar_url || "",
+          lastMessage: "",
+          timestamp: "",
+          unreadCount: 0,
+          isOnline: false,
+          bio: stateUser.bio || stateUser.openai_persona || "",
+          interests: stateUser.interests || [],
+          mutualFriends: stateUser.mutualFriends || 0,
+          location: stateUser.location || "",
+          joinedDate: stateUser.joinedDate || "",
+          email: stateUser.email || "",
+          phone: stateUser.phone || stateUser.phone_number || "",
+        }
+      : {
+          id: userId,
+          name: "New User",
+          username: "",
+          avatar: "",
+          lastMessage: "",
+          timestamp: "",
+          unreadCount: 0,
+          isOnline: false,
+          bio: "",
+          interests: [],
+          mutualFriends: 0,
+          location: "",
+          joinedDate: "",
+          email: "",
+          phone: "",
+        };
+  }
+
+  useEffect(() => {
+    if (currentChatUser && currentChatUser.id) {
+      const dms = JSON.parse(localStorage.getItem("activeDms") || "[]");
+      if (!dms.includes(currentChatUser.id)) {
+        dms.push(currentChatUser.id);
+        localStorage.setItem("activeDms", JSON.stringify(dms));
+      }
+    }
+  }, [currentChatUser?.id]);
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const handleFileAttachment = () => {
@@ -244,7 +310,7 @@ const Chats = () => {
 
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         const attachedFile: AttachedFile = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -252,23 +318,25 @@ const Chats = () => {
           size: file.size,
           type: file.type,
           url: e.target?.result as string,
-          preview: file.type.startsWith('image/') ? e.target?.result as string : undefined
+          preview: file.type.startsWith("image/")
+            ? (e.target?.result as string)
+            : undefined,
         };
-        
-        setAttachedFiles(prev => [...prev, attachedFile]);
+
+        setAttachedFiles((prev) => [...prev, attachedFile]);
       };
-      
+
       reader.readAsDataURL(file);
     });
 
     // Reset the input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const removeAttachedFile = (fileId: string) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+    setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
   const handleSendMessage = () => {
@@ -278,30 +346,38 @@ const Chats = () => {
       id: Date.now().toString(),
       senderId: "me",
       content: messageInput.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: attachedFiles.length > 0 ? 'file' : 'text',
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      type: attachedFiles.length > 0 ? "file" : "text",
       files: attachedFiles.length > 0 ? [...attachedFiles] : undefined,
       isDelivered: false,
-      isSending: true
+      isSending: true,
     };
 
     // Add message immediately to UI
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setMessageInput("");
     setAttachedFiles([]);
 
     // Show success toast
     toast.success("Message sent!", {
-      description: attachedFiles.length > 0 ? `Sent with ${attachedFiles.length} file(s)` : undefined
+      description:
+        attachedFiles.length > 0
+          ? `Sent with ${attachedFiles.length} file(s)`
+          : undefined,
     });
 
     // Simulate message delivery after a short delay
     setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === newMessage.id 
-          ? { ...msg, isSending: false, isDelivered: true }
-          : msg
-      ));
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === newMessage.id
+            ? { ...msg, isSending: false, isDelivered: true }
+            : msg
+        )
+      );
     }, 1500);
   };
 
@@ -311,14 +387,14 @@ const Chats = () => {
   };
 
   const renderFilePreview = (file: AttachedFile) => {
-    const isImage = file.type.startsWith('image/');
-    
+    const isImage = file.type.startsWith("image/");
+
     return (
       <div key={file.id} className="relative group">
         {isImage ? (
           <div className="relative">
-            <img 
-              src={file.preview} 
+            <img
+              src={file.preview}
               alt={file.name}
               className="w-20 h-20 object-cover rounded-lg border border-border/50"
             />
@@ -336,7 +412,9 @@ const Chats = () => {
             <FileText className="h-8 w-8 text-muted-foreground" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatFileSize(file.size)}
+              </p>
             </div>
             <Button
               size="icon"
@@ -358,29 +436,31 @@ const Chats = () => {
     return (
       <div className="mt-2 space-y-2">
         {message.files.map((file) => {
-          const isImage = file.type.startsWith('image/');
-          
+          const isImage = file.type.startsWith("image/");
+
           return (
             <div key={file.id}>
               {isImage ? (
-                <img 
-                  src={file.url} 
+                <img
+                  src={file.url}
                   alt={file.name}
                   className="max-w-[250px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => window.open(file.url, '_blank')}
+                  onClick={() => window.open(file.url, "_blank")}
                 />
               ) : (
                 <div className="flex items-center gap-2 p-2 bg-background/50 rounded-lg border border-border/20 max-w-[250px]">
                   <FileText className="h-6 w-6 text-muted-foreground" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatFileSize(file.size)}
+                    </p>
                   </div>
                   <Button
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6"
-                    onClick={() => window.open(file.url, '_blank')}
+                    onClick={() => window.open(file.url, "_blank")}
                   >
                     <Download className="h-3 w-3" />
                   </Button>
@@ -406,7 +486,11 @@ const Chats = () => {
                 </Button>
               </Link>
               <Link to="/dashboard" className="flex items-center gap-2">
-                <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
+                <img
+                  src="/logo.png"
+                  alt="AuraLink Logo"
+                  className="w-10 h-10"
+                />
                 <span className="text-2xl font-bold">AuraLink</span>
               </Link>
             </div>
@@ -426,8 +510,11 @@ const Chats = () => {
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold tracking-tight">Messages</h2>
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {mockChats.filter(chat => chat.unreadCount > 0).length} new
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/10 text-primary"
+                >
+                  {mockChats.filter((chat) => chat.unreadCount > 0).length} new
                 </Badge>
               </div>
 
@@ -446,15 +533,15 @@ const Chats = () => {
               <ScrollArea className="flex-1">
                 <div className="space-y-2">
                   {mockChats.map((chat) => (
-                                         <div
-                       key={chat.id}
-                       onClick={() => handleChatSelect(chat.id)}
-                       className={`p-4 rounded-xl cursor-pointer transition-all duration-300 hover:bg-muted/50 hover:shadow-md ${
-                         selectedChat === chat.id 
-                           ? 'bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 shadow-lg' 
-                           : 'hover:scale-[1.02] hover:shadow-sm'
-                       }`}
-                     >
+                    <div
+                      key={chat.id}
+                      onClick={() => handleChatSelect(chat.id)}
+                      className={`p-4 rounded-xl cursor-pointer transition-all duration-300 hover:bg-muted/50 hover:shadow-md ${
+                        selectedChat === chat.id
+                          ? "bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 shadow-lg"
+                          : "hover:scale-[1.02] hover:shadow-sm"
+                      }`}
+                    >
                       <div className="flex items-start gap-3">
                         <div className="relative">
                           <Avatar className="h-12 w-12">
@@ -469,8 +556,12 @@ const Chats = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
-                            <span className="text-xs text-muted-foreground">{chat.timestamp}</span>
+                            <h3 className="font-semibold text-sm truncate">
+                              {chat.name}
+                            </h3>
+                            <span className="text-xs text-muted-foreground">
+                              {chat.timestamp}
+                            </span>
                           </div>
                           <p className="text-sm text-muted-foreground truncate leading-relaxed">
                             {chat.lastMessage}
@@ -509,30 +600,34 @@ const Chats = () => {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">{currentChatUser.name}</h3>
+                        <h3 className="font-semibold text-lg">
+                          {currentChatUser.name}
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          {currentChatUser.isOnline ? 'Online' : 'Last seen recently'}
+                          {currentChatUser.isOnline
+                            ? "Online"
+                            : "Last seen recently"}
                         </p>
                       </div>
                     </div>
-                                         <div className="flex items-center gap-2">
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="rounded-full hover:bg-primary/10 transition-colors"
-                         onClick={() => setIsUserInfoOpen(true)}
-                       >
-                         <Info className="w-4 h-4" />
-                       </Button>
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="rounded-full hover:bg-primary/10 transition-colors"
-                         onClick={() => setIsChatOptionsOpen(true)}
-                       >
-                         <MoreVertical className="w-4 h-4" />
-                       </Button>
-                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-primary/10 transition-colors"
+                        onClick={() => setIsUserInfoOpen(true)}
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-primary/10 transition-colors"
+                        onClick={() => setIsChatOptionsOpen(true)}
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -542,48 +637,60 @@ const Chats = () => {
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${message.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${
+                          message.senderId === "me"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
                       >
-                                                                          <div
-                           className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
-                             message.senderId === 'me'
-                               ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground ml-12'
-                               : 'bg-gradient-to-r from-muted to-muted/80 mr-12'
-                           } ${message.isSending ? 'opacity-70' : ''}`}
-                         >
-                           {message.content && (
-                             <p className="text-sm leading-relaxed">{message.content}</p>
-                           )}
-                           {renderMessageFiles(message)}
-                           <div className={`flex items-center justify-between mt-1 ${
-                             message.senderId === 'me' ? 'flex-row-reverse' : ''
-                           }`}>
-                             <p className={`text-xs ${
-                               message.senderId === 'me' 
-                                 ? 'text-primary-foreground/70' 
-                                 : 'text-muted-foreground'
-                             }`}>
-                               {message.timestamp}
-                             </p>
-                             {message.senderId === 'me' && (
-                               <div className="flex items-center gap-1 ml-2">
-                                 {message.isSending ? (
-                                   <Loader2 className="w-3 h-3 animate-spin text-primary-foreground/50" />
-                                 ) : message.isDelivered ? (
-                                   <CheckCircle2 className="w-3 h-3 text-primary-foreground/70" />
-                                 ) : (
-                                   <Clock className="w-3 h-3 text-primary-foreground/50" />
-                                 )}
-                               </div>
-                             )}
-                           </div>
-                         </div>
+                        <div
+                          className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
+                            message.senderId === "me"
+                              ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground ml-12"
+                              : "bg-gradient-to-r from-muted to-muted/80 mr-12"
+                          } ${message.isSending ? "opacity-70" : ""}`}
+                        >
+                          {message.content && (
+                            <p className="text-sm leading-relaxed">
+                              {message.content}
+                            </p>
+                          )}
+                          {renderMessageFiles(message)}
+                          <div
+                            className={`flex items-center justify-between mt-1 ${
+                              message.senderId === "me"
+                                ? "flex-row-reverse"
+                                : ""
+                            }`}
+                          >
+                            <p
+                              className={`text-xs ${
+                                message.senderId === "me"
+                                  ? "text-primary-foreground/70"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {message.timestamp}
+                            </p>
+                            {message.senderId === "me" && (
+                              <div className="flex items-center gap-1 ml-2">
+                                {message.isSending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin text-primary-foreground/50" />
+                                ) : message.isDelivered ? (
+                                  <CheckCircle2 className="w-3 h-3 text-primary-foreground/70" />
+                                ) : (
+                                  <Clock className="w-3 h-3 text-primary-foreground/50" />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </ScrollArea>
 
-                                {/* Message Input */}
+                {/* Message Input */}
                 <div className="p-6 border-t border-border/50">
                   {/* File Attachments Preview */}
                   {attachedFiles.length > 0 && (
@@ -591,7 +698,8 @@ const Chats = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <Paperclip className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          {attachedFiles.length} file{attachedFiles.length > 1 ? 's' : ''} attached
+                          {attachedFiles.length} file
+                          {attachedFiles.length > 1 ? "s" : ""} attached
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -599,7 +707,7 @@ const Chats = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-3">
                     <input
                       ref={fileInputRef}
@@ -609,9 +717,9 @@ const Chats = () => {
                       className="hidden"
                       accept="image/*,application/pdf,.doc,.docx,.txt,.zip,.rar"
                     />
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="rounded-full hover:bg-primary/10 transition-colors"
                       onClick={handleFileAttachment}
                     >
@@ -622,20 +730,24 @@ const Chats = () => {
                         placeholder="Type a message..."
                         value={messageInput}
                         onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && handleSendMessage()
+                        }
                         className="pr-12 bg-background/50 border-border/50 focus:border-primary/50 rounded-full"
                       />
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
                       >
                         <Smile className="w-4 h-4" />
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       onClick={handleSendMessage}
-                      disabled={!messageInput.trim() && attachedFiles.length === 0}
+                      disabled={
+                        !messageInput.trim() && attachedFiles.length === 0
+                      }
                       className="rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       size="icon"
                     >
@@ -651,9 +763,12 @@ const Chats = () => {
                   <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Send className="w-10 h-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-2">Start a Conversation</h3>
+                  <h3 className="text-2xl font-semibold mb-2">
+                    Start a Conversation
+                  </h3>
                   <p className="text-muted-foreground max-w-md">
-                    Select a chat from the sidebar to start messaging, or go back to discover new people to connect with.
+                    Select a chat from the sidebar to start messaging, or go
+                    back to discover new people to connect with.
                   </p>
                   <Button asChild className="mt-6">
                     <Link to="/search">Find New Connections</Link>
@@ -677,18 +792,24 @@ const Chats = () => {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-semibold text-lg">{currentChatUser?.name}</div>
-                <div className="text-sm text-muted-foreground">@{currentChatUser?.username}</div>
+                <div className="font-semibold text-lg">
+                  {currentChatUser?.name}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  @{currentChatUser?.username}
+                </div>
               </div>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             {/* Bio */}
             {currentChatUser?.bio && (
               <div>
                 <h4 className="font-medium text-sm mb-2">About</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">{currentChatUser.bio}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {currentChatUser.bio}
+                </p>
               </div>
             )}
 
@@ -716,49 +837,62 @@ const Chats = () => {
               {currentChatUser?.joinedDate && (
                 <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Joined {currentChatUser.joinedDate}</span>
+                  <span className="text-sm">
+                    Joined {currentChatUser.joinedDate}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Interests */}
-            {currentChatUser?.interests && currentChatUser.interests.length > 0 && (
-              <div>
-                <h4 className="font-medium text-sm mb-2">Interests</h4>
-                <div className="flex flex-wrap gap-2">
-                  {currentChatUser.interests.map((interest) => (
-                    <Badge key={interest} variant="secondary" className="bg-primary/10 text-primary">
-                      {interest}
-                    </Badge>
-                  ))}
+            {currentChatUser?.interests &&
+              currentChatUser.interests.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm mb-2">Interests</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {currentChatUser.interests.map((interest) => (
+                      <Badge
+                        key={interest}
+                        variant="secondary"
+                        className="bg-primary/10 text-primary"
+                      >
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Mutual Friends */}
             {currentChatUser?.mutualFriends && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
                 <Users className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{currentChatUser.mutualFriends} mutual friends</span>
+                <span className="text-sm font-medium">
+                  {currentChatUser.mutualFriends} mutual friends
+                </span>
               </div>
             )}
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button 
+              <Button
                 className="flex-1"
                 onClick={() => {
                   setIsUserInfoOpen(false);
-                  toast.success("Profile viewed", { description: "Navigate to full profile page" });
+                  toast.success("Profile viewed", {
+                    description: "Navigate to full profile page",
+                  });
                 }}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 View Profile
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/persona/${currentChatUser?.id}`);
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/persona/${currentChatUser?.id}`
+                  );
                   toast.success("Profile link copied!");
                 }}
               >
@@ -778,7 +912,7 @@ const Chats = () => {
               Manage your conversation with {currentChatUser?.name}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Notifications */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
@@ -789,7 +923,10 @@ const Chats = () => {
                   <Bell className="w-4 h-4 text-muted-foreground" />
                 )}
                 <div>
-                  <Label htmlFor="notifications" className="text-sm font-medium">
+                  <Label
+                    htmlFor="notifications"
+                    className="text-sm font-medium"
+                  >
                     Notifications
                   </Label>
                   <p className="text-xs text-muted-foreground">
@@ -802,7 +939,9 @@ const Chats = () => {
                 checked={!isNotificationsMuted}
                 onCheckedChange={(checked) => {
                   setIsNotificationsMuted(!checked);
-                  toast.success(checked ? "Notifications enabled" : "Notifications muted");
+                  toast.success(
+                    checked ? "Notifications enabled" : "Notifications muted"
+                  );
                 }}
               />
             </div>
@@ -814,30 +953,36 @@ const Chats = () => {
                 className="w-full justify-start"
                 onClick={() => {
                   setIsChatOptionsOpen(false);
-                  toast.success("Chat exported", { description: "Download will begin shortly" });
+                  toast.success("Chat exported", {
+                    description: "Download will begin shortly",
+                  });
                 }}
               >
                 <Archive className="w-4 h-4 mr-3" />
                 Export Chat History
               </Button>
-              
+
               <Button
                 variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
                   setIsChatOptionsOpen(false);
-                  toast.success("Chat cleared", { description: "All messages have been removed locally" });
+                  toast.success("Chat cleared", {
+                    description: "All messages have been removed locally",
+                  });
                 }}
               >
                 <Trash2 className="w-4 h-4 mr-3" />
                 Clear Chat History
               </Button>
-              
+
               <Button
                 variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://auralink.app/chats/${currentChatUser?.id}`);
+                  navigator.clipboard.writeText(
+                    `https://auralink.app/chats/${currentChatUser?.id}`
+                  );
                   toast.success("Chat link copied!");
                 }}
               >
@@ -855,19 +1000,23 @@ const Chats = () => {
                 className="w-full justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                 onClick={() => {
                   setIsChatOptionsOpen(false);
-                  toast.warning("User blocked", { description: "You won't receive messages from this user" });
+                  toast.warning("User blocked", {
+                    description: "You won't receive messages from this user",
+                  });
                 }}
               >
                 <Shield className="w-4 h-4 mr-3" />
                 Block User
               </Button>
-              
+
               <Button
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => {
                   setIsChatOptionsOpen(false);
-                  toast.error("Report submitted", { description: "We'll review this conversation" });
+                  toast.error("Report submitted", {
+                    description: "We'll review this conversation",
+                  });
                 }}
               >
                 <Flag className="w-4 h-4 mr-3" />
@@ -881,4 +1030,4 @@ const Chats = () => {
   );
 };
 
-export default Chats; 
+export default Chats;

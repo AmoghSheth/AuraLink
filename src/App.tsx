@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,6 +19,8 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import ExportedCard from "./pages/ExportedCard";
+import CalendarPage from "./pages/CalendarPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +45,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error:', error, errorInfo);
+    console.error("App Error:", error, errorInfo);
   }
 
   render() {
@@ -52,9 +53,11 @@ class ErrorBoundary extends React.Component<
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground mb-4">Something went wrong</h1>
-            <button 
-              onClick={() => window.location.reload()} 
+            <h1 className="text-2xl font-bold text-foreground mb-4">
+              Something went wrong
+            </h1>
+            <button
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
             >
               Reload Page
@@ -89,6 +92,8 @@ const App = () => (
             <Route path="/chats/:userId" element={<Chats />} />
             <Route path="/persona/:id" element={<PersonaViewer />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/exported-card/:id" element={<ExportedCard />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -1,9 +1,15 @@
-
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
-import { Button } from './ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Mail, Phone, Cake } from 'lucide-react';
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Mail, Phone, Cake } from "lucide-react";
 
 interface ChatPopupProps {
   isOpen: boolean;
@@ -16,9 +22,15 @@ interface ChatPopupProps {
     age: number;
     conversationTips: string[];
   } | null;
+  onDmClick?: () => void;
 }
 
-const ChatPopup: React.FC<ChatPopupProps> = ({ isOpen, onClose, user }) => {
+const ChatPopup: React.FC<ChatPopupProps> = ({
+  isOpen,
+  onClose,
+  user,
+  onDmClick,
+}) => {
   if (!isOpen || !user) {
     return null;
   }
@@ -30,12 +42,15 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isOpen, onClose, user }) => {
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={user.avatarUrl} alt={user.name} />
-              <AvatarFallback className="text-2xl">{user.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="text-2xl">
+                {user.name.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <div>
               <DialogTitle className="text-2xl">{user.name}</DialogTitle>
               <DialogDescription>
-                Ready to connect. Here are some details to get the conversation started.
+                Ready to connect. Here are some details to get the conversation
+                started.
               </DialogDescription>
             </div>
           </div>
@@ -46,15 +61,17 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isOpen, onClose, user }) => {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>{user.email || 'No email provided'}</span>
+                <span>{user.email || "No email provided"}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{user.phone || 'No phone provided'}</span>
+                <span>{user.phone || "No phone provided"}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Cake className="w-4 h-4 text-muted-foreground" />
-                <span>{user.age ? `${user.age} years old` : 'Age not provided'}</span>
+                <span>
+                  {user.age ? `${user.age} years old` : "Age not provided"}
+                </span>
               </div>
             </div>
           </div>
@@ -68,8 +85,18 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isOpen, onClose, user }) => {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">Close</Button>
-          <Button onClick={() => window.open(`mailto:${user.email}`)}>Email {user.name.split(' ')[0]}</Button>
+          <Button onClick={onClose} variant="outline">
+            Close
+          </Button>
+          <Button onClick={() => window.open(`mailto:${user.email}`)}>
+            Email {user.name.split(" ")[0]}
+          </Button>
+          <Button
+            onClick={onDmClick}
+            className="bg-primary text-white hover:bg-primary/90"
+          >
+            DM {user.name.split(" ")[0]}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
