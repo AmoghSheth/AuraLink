@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+// src/pages/Dashboard.tsx
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PersonaCard from "@/components/PersonaCard";
@@ -15,20 +17,19 @@ import { supabase } from "@/lib/supabaseClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Link2 } from "lucide-react";
 import html2canvas from "html2canvas";
 
-// Define types for the data we expect
+// --- Types ---
 interface UserProfile {
   id: string;
   username: string;
@@ -56,18 +57,38 @@ interface Activity {
   };
 }
 
+interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  members: string[]; // array of user UUIDs
+  created_at?: string;
+}
+
+// --- Component ---
 const Dashboard = () => {
   const navigate = useNavigate();
+
+  // User data
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Activity, matches, DMs
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
   const [recentMatches, setRecentMatches] = useState<UserProfile[]>([]);
   const [activeDms, setActiveDms] = useState<UserProfile[]>([]);
-  const [activeGroups, setActiveGroups] = useState<any[]>([]); // Replace 'any' with your group type if available
+
+  // Groups
+  const [activeGroups, setActiveGroups] = useState<Group[]>([]);
+  const [suggestedGroups, setSuggestedGroups] = useState<Group[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+
+  // Loading flags
   const [loading, setLoading] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingMatches, setLoadingMatches] = useState(true);
 
-  // New state for functionality
+  // Likes & requests
   const [likedUsers, setLikedUsers] = useState<string[]>([]);
   const [sentRequests, setSentRequests] = useState<string[]>([]);
 
@@ -76,78 +97,90 @@ const Dashboard = () => {
       setLoading(true);
       setLoadingFeed(true);
       setLoadingMatches(true);
+      setLoadingGroups(true);
 
+      // 1) Auth
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (user) {
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching user profile:", profileError);
-        } else if (profileData) {
-          setUserProfile(profileData);
-
-          // Fetch existing likes and friend requests
-          const [likedData, requestsData] = await Promise.all([
-            supabase
-              .from("match_history")
-              .select("target_username")
-              .eq("actor_username", profileData.username)
-              .eq("action", "liked"),
-            supabase
-              .from("friend_requests")
-              .select("to_user_username")
-              .eq("from_user_username", profileData.username)
-              .eq("status", "pending"),
-          ]);
-
-          if (likedData.data) {
-            setLikedUsers(likedData.data.map((u) => u.target_username));
-          }
-          if (requestsData.data) {
-            setSentRequests(requestsData.data.map((r) => r.to_user_username));
-          }
-        }
+      if (!user) {
         setLoading(false);
-
-        // Fetch activity feed
-        const { data: activityData, error: activityError } = await supabase
-          .from("activity")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(10);
-
-        if (activityError) {
-          console.error("Error fetching activity feed:", activityError);
-        } else {
-          setActivityFeed(activityData || []);
-        }
         setLoadingFeed(false);
+        setLoadingMatches(false);
+        setLoadingGroups(false);
+        return;
+      }
 
-        // Fetch recent matches
+      // 2) Fetch profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error("Error fetching user profile:", profileError);
+        setLoading(false);
+      } else {
+        setUserProfile(profileData);
+
+        // 3) Fetch likes & friend requests
+        const [likedData, requestsData] = await Promise.all([
+          supabase
+            .from("match_history")
+            .select("target_username")
+            .eq("actor_username", profileData.username)
+            .eq("action", "liked"),
+          supabase
+            .from("friend_requests")
+            .select("to_user_username")
+            .eq("from_user_username", profileData.username)
+            .eq("status", "pending"),
+        ]);
+
+        if (likedData.data) {
+          setLikedUsers(likedData.data.map((u) => u.target_username));
+        }
+        if (requestsData.data) {
+          setSentRequests(requestsData.data.map((r) => r.to_user_username));
+        }
+
+        setLoading(false);
+      }
+
+      // 4) Activity feed
+      const { data: activityData, error: activityError } = await supabase
+        .from("activity")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (activityError) {
+        console.error("Error fetching activity feed:", activityError);
+      } else {
+        setActivityFeed(activityData || []);
+      }
+      setLoadingFeed(false);
+
+      // 5) Recent matches
+      if (userProfile?.username) {
         const { data: likedUsersData, error: likedUsersError } = await supabase
           .from("match_history")
           .select("target_username")
-          .eq("actor_username", profileData.username)
+          .eq("actor_username", userProfile.username)
           .eq("action", "liked")
           .order("created_at", { ascending: false })
           .limit(2);
 
         if (likedUsersError) {
           console.error("Error fetching recent matches:", likedUsersError);
-        } else if (likedUsersData && likedUsersData.length > 0) {
-          const likedUsernames = likedUsersData.map((u) => u.target_username);
+        } else if (likedUsersData?.length) {
+          const names = likedUsersData.map((u) => u.target_username);
           const { data: matchesProfiles, error: matchesError } = await supabase
             .from("users")
             .select("*")
-            .in("username", likedUsernames);
+            .in("username", names);
 
           if (matchesError) {
             console.error("Error fetching match profiles:", matchesError);
@@ -155,57 +188,48 @@ const Dashboard = () => {
             setRecentMatches(matchesProfiles || []);
           }
         }
-        setLoadingMatches(false);
-
-        // Fetch Active DMs from localStorage
-        const dms = JSON.parse(localStorage.getItem("activeDms") || "[]");
-        if (dms.length > 0) {
-          const { data: dmProfiles, error: dmError } = await supabase
-            .from("users")
-            .select("*")
-            .in("id", dms);
-          if (!dmError && dmProfiles) setActiveDms(dmProfiles);
-        } else {
-          setActiveDms([]);
-        }
-        // Fetch Active Groups (mock for now)
-        setActiveGroups([
-          {
-            id: "1",
-            name: "Indie Music Lovers NYC",
-            members: 342,
-            category: "Music",
-            lastActivity: "2 hours ago",
-          },
-          {
-            id: "2",
-            name: "Sustainable Living Community",
-            members: 567,
-            category: "Lifestyle",
-            lastActivity: "1 day ago",
-          },
-        ]);
-      } else {
-        setLoading(false);
-        setLoadingFeed(false);
-        setLoadingMatches(false);
       }
+      setLoadingMatches(false);
+
+      // 6) Active DMs from localStorage
+      const dms = JSON.parse(localStorage.getItem("activeDms") || "[]");
+      if (dms.length) {
+        const { data: dmProfiles, error: dmError } = await supabase
+          .from("users")
+          .select("*")
+          .in("id", dms);
+        if (!dmError && dmProfiles) setActiveDms(dmProfiles);
+      } else {
+        setActiveDms([]);
+      }
+
+      // 7) Fetch all groups
+      const { data: groupsData, error: groupsError } = await supabase
+        .from<Group>("groups")
+        .select("*");
+
+      if (groupsError) {
+        console.error("Error fetching groups:", groupsError);
+      } else if (groupsData) {
+        // split into joined vs suggested
+        const joined = groupsData.filter((g) =>
+          Array.isArray(g.members) && user?.id && g.members.includes(user.id)
+        );
+        const suggested = groupsData.filter(
+          (g) =>
+            !Array.isArray(g.members) || !g.members.includes(user.id)
+        );
+
+        setActiveGroups(joined);
+        setSuggestedGroups(suggested);
+      }
+      setLoadingGroups(false);
     };
 
     fetchDashboardData();
-  }, []);
+  }, [userProfile?.username]);
 
-  const suggestedGroups = [
-    { id: "1", name: "Ramen Lovers", members: 234, category: "Food" },
-    { id: "2", name: "Indie Music NYC", members: 456, category: "Music" },
-    {
-      id: "3",
-      name: "Sustainable Living",
-      members: 789,
-      category: "Lifestyle",
-    },
-  ];
-
+  // PersonaCard props
   const personaCardUser = userProfile
     ? {
         id: userProfile.id,
@@ -219,204 +243,151 @@ const Dashboard = () => {
       }
     : null;
 
-  // Action handlers for PersonaCard buttons
-  const handleChatClick = (user: UserProfile) => {
-    navigate(`/chats/${user.id}`);
-  };
+  // --- Handlers ---
+  const handleChatClick = (u: UserProfile) => navigate(`/chats/${u.id}`);
 
-  const handleLike = async (user: UserProfile) => {
+  const handleLike = async (u: UserProfile) => {
     if (!userProfile) return;
-
-    // Check if already liked
-    if (likedUsers.includes(user.username)) {
-      toast.info(`You already liked ${user.full_name}!`, {
-        description: "You've already shown interest in this person.",
-      });
+    if (likedUsers.includes(u.username)) {
+      toast.info(`Already liked ${u.full_name}!`);
       return;
     }
-
-    const toastId = toast.loading(`Liking ${user.full_name}...`);
-    try {
-      const { error } = await supabase.from("match_history").insert({
-        actor_username: userProfile.username,
-        target_username: user.username,
-        action: "liked",
-      });
-
-      if (error) throw error;
-
-      setLikedUsers((prev) => [...prev, user.username]);
-      toast.success(`You liked ${user.full_name}!`, {
-        id: toastId,
-        description:
-          "They'll be notified of your interest. Keep exploring for more matches!",
-      });
-    } catch (error: any) {
-      toast.error(error.message, { id: toastId });
+    const t = toast.loading(`Liking ${u.full_name}...`);
+    const { error } = await supabase.from("match_history").insert({
+      actor_username: userProfile.username,
+      target_username: u.username,
+      action: "liked",
+    });
+    if (error) {
+      toast.error(error.message, { id: t });
+    } else {
+      setLikedUsers((p) => [...p, u.username]);
+      toast.success(`You liked ${u.full_name}!`, { id: t });
     }
   };
 
-  const handleAddFriend = async (user: UserProfile) => {
+  const handleAddFriend = async (u: UserProfile) => {
     if (!userProfile) return;
-
-    // Check if already friends
-    if (userProfile.friends?.includes(user.username)) {
-      toast.info(`You're already friends with ${user.full_name}!`, {
-        description: "You can message them anytime or view their full profile.",
-      });
+    if (userProfile.friends?.includes(u.username)) {
+      toast.info(`Already friends with ${u.full_name}!`);
       return;
     }
-
-    // Check if request already sent
-    if (sentRequests.includes(user.username)) {
-      toast.info(`Friend request already sent to ${user.full_name}!`, {
-        description: "Please wait for them to respond to your request.",
-      });
+    if (sentRequests.includes(u.username)) {
+      toast.info(`Friend request already sent to ${u.full_name}!`);
       return;
     }
-
-    const toastId = toast.loading(
-      `Sending friend request to ${user.full_name}...`
-    );
-    try {
-      const { error } = await supabase.from("friend_requests").insert({
-        from_user_username: userProfile.username,
-        to_user_username: user.username,
-      });
-
-      if (error) {
-        if (error.code === "23505") {
-          throw new Error("Friend request already sent.");
-        }
-        throw new Error(error.message);
-      }
-
-      setSentRequests((prev) => [...prev, user.username]);
-      toast.success(`Friend request sent to ${user.full_name}!`, {
-        id: toastId,
-        description: "They'll receive your request and can accept or decline.",
-      });
-    } catch (error: any) {
-      toast.error(error.message, { id: toastId });
+    const t = toast.loading(`Sending request to ${u.full_name}...`);
+    const { error } = await supabase.from("friend_requests").insert({
+      from_user_username: userProfile.username,
+      to_user_username: u.username,
+    });
+    if (error) {
+      toast.error(error.message, { id: t });
+    } else {
+      setSentRequests((p) => [...p, u.username]);
+      toast.success(`Request sent to ${u.full_name}!`, { id: t });
     }
   };
 
-  const handleShare = async (user: UserProfile) => {
+  const handleShare = async (u: UserProfile) => {
+    const url = `${window.location.origin}/persona/${u.id}`;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `Check out ${user.full_name} on AuraLink`,
-          text: `Meet ${user.full_name}: ${user.openai_persona?.substring(
-            0,
-            100
-          )}...`,
-          url: `${window.location.origin}/persona/${user.id}`,
+          title: `Meet ${u.full_name} on AuraLink`,
+          text: u.openai_persona.slice(0, 100),
+          url,
         });
       } else {
-        // Fallback for browsers that don't support Web Share API
-        await navigator.clipboard.writeText(
-          `${window.location.origin}/persona/${user.id}`
-        );
-        toast.success(`Profile link copied to clipboard!`, {
-          description:
-            "Share this link with friends to introduce them to this person.",
-        });
+        await navigator.clipboard.writeText(url);
+        toast.success("Profile link copied!");
       }
-    } catch (error) {
-      toast.error("Failed to share profile");
+    } catch {
+      toast.error("Failed to share");
     }
   };
 
-  const renderActivity = (activity: Activity) => {
-    const timeAgo = formatDistanceToNow(new Date(activity.created_at), {
+  // Render activity items
+  const renderActivity = (act: Activity) => {
+    const ago = formatDistanceToNow(new Date(act.created_at), {
       addSuffix: true,
     });
-    switch (activity.type) {
-      case "new_friend":
-        return (
-          <div
-            key={activity.id}
-            className="flex items-start gap-3 p-3 rounded-lg bg-muted/30"
-          >
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">
-                <strong>
-                  {activity.metadata.actor_full_name || activity.actor_username}
-                </strong>{" "}
-                became friends with{" "}
-                <strong>
-                  {activity.metadata.target_full_name ||
-                    activity.target_username}
-                </strong>
-                .
-              </p>
-              <p className="text-xs text-muted-foreground">{timeAgo}</p>
-            </div>
+    if (act.type === "new_friend")
+      return (
+        <div
+          key={act.id}
+          className="flex items-start gap-3 p-3 rounded-lg bg-muted/30"
+        >
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Users className="w-4 h-4 text-primary" />
           </div>
-        );
-      default:
-        return null;
-    }
+          <div>
+            <p className="text-sm font-medium">
+              <strong>
+                {act.metadata.actor_full_name || act.actor_username}
+              </strong>{" "}
+              became friends with{" "}
+              <strong>
+                {act.metadata.target_full_name || act.target_username}
+              </strong>
+              .
+            </p>
+            <p className="text-xs text-muted-foreground">{ago}</p>
+          </div>
+        </div>
+      );
+    return null;
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* NAV */}
       <nav className="border-b bg-card/50 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
-              <span className="text-2xl font-bold">AuraLink</span>
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
+            <span className="text-2xl font-bold">AuraLink</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/search">
+              <Button variant="ghost" size="sm">
+                <Search className="w-4 h-4 mr-2" /> Search
+              </Button>
             </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/search">
-                <Button variant="ghost" size="sm">
-                  <Search className="w-4 h-4 mr-2" />
-                  Search
-                </Button>
-              </Link>
-              <Link to="/match">
-                <Button variant="ghost" size="sm">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Match
-                </Button>
-              </Link>
-              <Link to="/friends">
-                <Button variant="ghost" size="sm">
-                  <Users className="w-4 h-4 mr-2" />
-                  Friends
-                </Button>
-              </Link>
-              <Link to="/gift">
-                <Button variant="ghost" size="sm">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Gift
-                </Button>
-              </Link>
-              <Link to="/calendar">
-                <Button variant="ghost" size="sm">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  Calendar
-                </Button>
-              </Link>
-              <Link to="/settings">
-                <Button variant="ghost" size="icon">
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
+            <Link to="/match">
+              <Button variant="ghost" size="sm">
+                <Sparkles className="w-4 h-4 mr-3" /> Match
+              </Button>
+            </Link>
+            <Link to="/friends">
+              <Button variant="ghost" size="sm">
+                <Users className="w-4 h-4 mr-2" /> Friends
+              </Button>
+            </Link>
+            <Link to="/gift">
+              <Button variant="ghost" size="sm">
+                <Gift className="w-4 h-4 mr-2" /> Gift
+              </Button>
+            </Link>
+            <Link to="/calendar">
+              <Button variant="ghost" size="sm">
+                <CalendarIcon className="w-4 h-4 mr-2" /> Calendar
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button variant="ghost" size="icon">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
 
+      {/* MAIN */}
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back,{" "}
-            {loading ? "..." : userProfile?.full_name.split(" ")[0]}!
+            Welcome back, {loading ? "..." : userProfile?.full_name.split(" ")[0]}!
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening in your network
@@ -424,7 +395,9 @@ const Dashboard = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left (2/3) */}
           <div className="lg:col-span-2 space-y-8">
+            {/* PersonaCard */}
             <Card>
               <CardHeader>
                 <CardTitle>Your PersonaCard</CardTitle>
@@ -435,17 +408,18 @@ const Dashboard = () => {
                 ) : personaCardUser ? (
                   <>
                     <PersonaCard user={personaCardUser} showActions={false} />
-                    {/* Exportable Card Button */}
+                    {/* Export dialog button */}
                     <div className="flex justify-end mt-4">
-                      <ExportableCardDialog user={userProfile} />
+                      <ExportableCardDialog user={userProfile!} />
                     </div>
                   </>
                 ) : (
-                  <p>Could not load profile.</p>
+                  <p>Could not load your profile.</p>
                 )}
               </CardContent>
             </Card>
 
+            {/* Recent Matches */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Matches</CardTitle>
@@ -456,29 +430,29 @@ const Dashboard = () => {
                     <Skeleton className="h-24 w-full" />
                     <Skeleton className="h-24 w-full" />
                   </div>
-                ) : recentMatches.length > 0 ? (
+                ) : recentMatches.length ? (
                   <div className="grid md:grid-cols-2 gap-4">
-                    {recentMatches.map((match) => (
-                      <div key={match.id}>
-                        <PersonaCard
-                          user={{ ...match, bio: match.openai_persona }}
-                          variant="compact"
-                          onChatClick={handleChatClick}
-                          onLikeClick={handleLike}
-                          onShareClick={handleShare}
-                          onAddFriendClick={handleAddFriend}
-                        />
-                      </div>
+                    {recentMatches.map((m) => (
+                      <PersonaCard
+                        key={m.id}
+                        user={{ ...m, bio: m.openai_persona }}
+                        variant="compact"
+                        onChatClick={handleChatClick}
+                        onLikeClick={handleLike}
+                        onShareClick={handleShare}
+                        onAddFriendClick={handleAddFriend}
+                      />
                     ))}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm text-center">
-                    You haven't liked anyone recently. Go find a match!
+                    No recent matches. Give someone a like!
                   </p>
                 )}
               </CardContent>
             </Card>
 
+            {/* Activity Feed */}
             <Card>
               <CardHeader>
                 <CardTitle>Activity Feed</CardTitle>
@@ -489,7 +463,7 @@ const Dashboard = () => {
                     <Skeleton className="h-12 w-full" />
                     <Skeleton className="h-12 w-full" />
                   </div>
-                ) : activityFeed.length > 0 ? (
+                ) : activityFeed.length ? (
                   <div className="space-y-4">
                     {activityFeed.map(renderActivity)}
                   </div>
@@ -501,34 +475,32 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Active DMs Section */}
+            {/* Active DMs */}
             <Card>
               <CardHeader>
                 <CardTitle>Active DMs</CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="w-full whitespace-nowrap overflow-x-auto">
-                  <div className="flex gap-4">
-                    {activeDms.length > 0 ? (
-                      activeDms.map((user) => (
+                <div className="overflow-x-auto">
+                  <div className="flex gap-4 min-w-max">
+                    {activeDms.length ? (
+                      activeDms.map((dm) => (
                         <div
-                          key={user.id}
-                          className="min-w-[220px] max-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
+                          key={dm.id}
+                          className="min-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
                         >
-                          <div className="mb-2">
-                            <img
-                              src={user.avatar_url || "/logo.png"}
-                              alt={user.full_name}
-                              className="w-12 h-12 rounded-full mb-2"
-                            />
-                            <div className="font-semibold text-base text-center truncate">
-                              {user.full_name}
-                            </div>
+                          <img
+                            src={dm.avatar_url || "/logo.png"}
+                            alt={dm.full_name}
+                            className="w-12 h-12 rounded-full mb-2"
+                          />
+                          <div className="font-semibold text-base truncate text-center">
+                            {dm.full_name}
                           </div>
                           <Button
                             size="sm"
                             className="w-full mt-2"
-                            onClick={() => navigate(`/chats/${user.id}`)}
+                            onClick={() => navigate(`/chats/${dm.id}`)}
                           >
                             Open DM
                           </Button>
@@ -540,42 +512,37 @@ const Dashboard = () => {
                       </p>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Active Groups Section */}
+            {/* Active Groups */}
             <Card>
               <CardHeader>
                 <CardTitle>Active Groups</CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="w-full whitespace-nowrap overflow-x-auto">
-                  <div className="flex gap-4">
-                    {activeGroups.length > 0 ? (
-                      activeGroups.map((group) => (
+                <div className="overflow-x-auto">
+                  <div className="flex gap-4 min-w-max">
+                    {activeGroups.length ? (
+                      activeGroups.map((g) => (
                         <div
-                          key={group.id}
-                          className="min-w-[220px] max-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
+                          key={g.id}
+                          className="min-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
                         >
-                          <div className="mb-2">
-                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                              <Users className="w-6 h-6 text-primary" />
-                            </div>
-                            <div className="font-semibold text-base text-center truncate">
-                              {group.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground text-center">
-                              {group.members} members
-                            </div>
-                            <div className="text-xs text-muted-foreground text-center">
-                              Last activity: {group.lastActivity}
-                            </div>
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+                            <Users className="w-6 h-6 text-primary" />
+                          </div>
+                          <div className="font-semibold text-base truncate text-center">
+                            {g.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground text-center">
+                            {g.members.length} members
                           </div>
                           <Button
                             size="sm"
                             className="w-full mt-2"
-                            onClick={() => navigate(`/groups/${group.id}`)}
+                            onClick={() => navigate(`/groups/${g.id}`)}
                           >
                             Open Group
                           </Button>
@@ -583,69 +550,85 @@ const Dashboard = () => {
                       ))
                     ) : (
                       <p className="text-muted-foreground text-sm">
-                        No active groups yet.
+                        You haven’t joined any groups yet.
                       </p>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </CardContent>
             </Card>
           </div>
 
+          {/* Right (1/3) */}
           <div className="space-y-6">
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full" asChild>
+                <Button asChild className="w-full">
                   <Link to="/match">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Find Someone to Chat
+                    <Sparkles className="w-4 h-4 mr-2" /> Find Someone to Chat
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full" asChild>
+                <Button variant="outline" asChild className="w-full">
                   <Link to="/search">
-                    <Search className="w-4 h-4 mr-2" />
-                    Search People
+                    <Search className="w-4 h-4 mr-2" /> Search People
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full" asChild>
+                <Button variant="outline" asChild className="w-full">
                   <Link to="/gift">
-                    <Gift className="w-4 h-4 mr-2" />
-                    Generate Gift Ideas
+                    <Gift className="w-4 h-4 mr-2" /> Generate Gift Ideas
                   </Link>
                 </Button>
               </CardContent>
             </Card>
 
+            {/* Groups to Join */}
             <Card>
               <CardHeader>
                 <CardTitle>Groups to Join</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {suggestedGroups.map((group) => (
-                  <div
-                    key={group.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                  >
-                    <div>
-                      <p className="font-medium text-sm">{group.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {group.members} members
-                      </p>
+                {loadingGroups ? (
+                  <p className="text-muted-foreground text-sm">
+                    Loading groups…
+                  </p>
+                ) : suggestedGroups.length ? (
+                  suggestedGroups.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{g.name}</p>
+                        {g.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {g.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {g.members.length} members
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline">
+                        Join Group
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline">
-                      Join
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-sm text-center">
+                    No groups found.
+                  </p>
+                )}
                 <Button variant="ghost" className="w-full mt-3" asChild>
                   <Link to="/groups">View All Groups</Link>
                 </Button>
               </CardContent>
             </Card>
 
+            {/* Your Network */}
             <Card>
               <CardHeader>
                 <CardTitle>Your Network</CardTitle>
@@ -676,52 +659,72 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-function ExportableCardDialog({ user }) {
+// --- Exportable Card Dialog (full code) ---
+function ExportableCardDialog({ user }: { user: UserProfile }) {
   const [open, setOpen] = useState(false);
-  const [bio, setBio] = useState(
-    localStorage.getItem("export_bio") || user.openai_persona || ""
-  );
-  const [tags, setTags] = useState(
-    JSON.parse(localStorage.getItem("export_tags") || "[]") ||
-      (user.interests || []).slice(0, 4)
-  );
-  const [fullName, setFullName] = useState(
-    localStorage.getItem("export_fullName") || user.full_name || ""
-  );
-  const [email, setEmail] = useState(
-    localStorage.getItem("export_email") || user.email || ""
-  );
-  const [phone, setPhone] = useState(
-    localStorage.getItem("export_phone") || user.phone_number || ""
-  );
-  const [social, setSocial] = useState(
-    localStorage.getItem("export_social") || ""
-  );
-  const [birthday, setBirthday] = useState(
-    localStorage.getItem("export_birthday") || ""
-  );
-  const [location, setLocation] = useState(
-    localStorage.getItem("export_location") || ""
-  );
-  const [allergies, setAllergies] = useState(
-    localStorage.getItem("export_allergies") || ""
-  );
-  const [facts, setFacts] = useState(
-    localStorage.getItem("export_facts") || ""
-  );
-  const [hobbies, setHobbies] = useState(
-    localStorage.getItem("export_hobbies") || ""
-  );
-  const [food, setFood] = useState(localStorage.getItem("export_food") || "");
-  const [favorites, setFavorites] = useState(
-    localStorage.getItem("export_favorites") || ""
-  );
+
+  // form fields
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [social, setSocial] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [location, setLocation] = useState("");
+  const [allergies, setAllergies] = useState("");
+  const [facts, setFacts] = useState("");
+  const [hobbies, setHobbies] = useState("");
+  const [food, setFood] = useState("");
+  const [favorites, setFavorites] = useState("");
+  const [bio, setBio] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+
   const [generating, setGenerating] = useState(false);
   const [summary, setSummary] = useState("");
   const [summaryReady, setSummaryReady] = useState(false);
   const navigate = useNavigate();
 
-  // AI bio summary (3 sentences)
+  // Pre-fill when dialog opens
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      // load from localStorage or user
+      setFullName(localStorage.getItem("export_fullName") || user.full_name || "");
+      setEmail(localStorage.getItem("export_email") || user.email || "");
+      setPhone(localStorage.getItem("export_phone") || user.phone_number || "");
+      setSocial(localStorage.getItem("export_social") || "");
+      setBirthday(localStorage.getItem("export_birthday") || "");
+      setLocation(localStorage.getItem("export_location") || "");
+      setAllergies(localStorage.getItem("export_allergies") || "");
+      setFacts(localStorage.getItem("export_facts") || "");
+      setHobbies(localStorage.getItem("export_hobbies") || "");
+      setFood(localStorage.getItem("export_food") || "");
+      setFavorites(localStorage.getItem("export_favorites") || "");
+      setBio(localStorage.getItem("export_bio") || user.openai_persona || "");
+      setTags(
+        JSON.parse(localStorage.getItem("export_tags") || "[]") ||
+          (user.interests || []).slice(0, 4)
+      );
+    })();
+  }, [open]);
+
+  // Persist to localStorage
+  function saveFields() {
+    localStorage.setItem("export_fullName", fullName);
+    localStorage.setItem("export_email", email);
+    localStorage.setItem("export_phone", phone);
+    localStorage.setItem("export_social", social);
+    localStorage.setItem("export_birthday", birthday);
+    localStorage.setItem("export_location", location);
+    localStorage.setItem("export_allergies", allergies);
+    localStorage.setItem("export_facts", facts);
+    localStorage.setItem("export_hobbies", hobbies);
+    localStorage.setItem("export_food", food);
+    localStorage.setItem("export_favorites", favorites);
+    localStorage.setItem("export_bio", bio);
+    localStorage.setItem("export_tags", JSON.stringify(tags));
+  }
+
+  // AI‐powered bio suggestion
   async function suggestBio() {
     setGenerating(true);
     setSummary("");
@@ -738,7 +741,7 @@ function ExportableCardDialog({ user }) {
               {
                 parts: [
                   {
-                    text: `Write a 3-sentence summary bio for a social card. Name: ${fullName}. Tags: ${tags.join(
+                    text: `Write a 3-sentence summary bio. Name: ${fullName}. Tags: ${tags.join(
                       ", "
                     )}. Hobbies: ${hobbies}. Facts: ${facts}. Favorites: ${favorites}. Personality: ${
                       user.openai_persona || ""
@@ -757,32 +760,16 @@ function ExportableCardDialog({ user }) {
         setBio(suggestion);
         setSummaryReady(true);
       }
-    } catch (e) {
+    } catch {
       setSummary("Could not generate summary.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   }
 
-  // Save fields to localStorage
-  function saveFields() {
-    localStorage.setItem("export_bio", bio);
-    localStorage.setItem("export_tags", JSON.stringify(tags));
-    localStorage.setItem("export_fullName", fullName);
-    localStorage.setItem("export_email", email);
-    localStorage.setItem("export_phone", phone);
-    localStorage.setItem("export_social", social);
-    localStorage.setItem("export_birthday", birthday);
-    localStorage.setItem("export_location", location);
-    localStorage.setItem("export_allergies", allergies);
-    localStorage.setItem("export_facts", facts);
-    localStorage.setItem("export_hobbies", hobbies);
-    localStorage.setItem("export_food", food);
-    localStorage.setItem("export_favorites", favorites);
-  }
-
+  // Generate final card
   function handleGenerateCard() {
     saveFields();
-    // Save card data to localStorage with unique ID
     const cardId = "card_" + Date.now();
     const cardData = {
       id: cardId,
@@ -799,6 +786,7 @@ function ExportableCardDialog({ user }) {
       favorites,
       bio,
       tags,
+      userId: user.id,
     };
     const cards = JSON.parse(localStorage.getItem("generated_cards") || "[]");
     cards.push(cardData);
@@ -806,13 +794,11 @@ function ExportableCardDialog({ user }) {
     navigate(`/exported-card/${cardId}`);
   }
 
-  // Modern input style
   const inputClass =
-    "rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 px-3 py-2 w-full transition-all bg-white text-sm";
+    "rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 px-3 py-2 w-full bg-white text-sm";
   const textareaClass =
-    "rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 px-3 py-2 w-full min-h-[80px] transition-all bg-white text-sm";
+    "rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/30 px-3 py-2 w-full min-h-[80px] bg-white text-sm";
 
-  // Fetch generated cards
   const generatedCards = JSON.parse(
     localStorage.getItem("generated_cards") || "[]"
   );
@@ -825,15 +811,17 @@ function ExportableCardDialog({ user }) {
           Exportable Card
         </Button>
       </DialogTrigger>
+
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Export Persona Card</DialogTitle>
           <DialogDescription>
-            Edit your details, then preview your beautiful card to share
-            anywhere.
+            Edit your details, then preview your beautiful card.
           </DialogDescription>
         </DialogHeader>
+
         <div className="grid grid-cols-1 gap-6">
+          {/* Left column */}
           <div className="space-y-3">
             <label className="block font-medium">Full Name</label>
             <input
@@ -842,14 +830,12 @@ function ExportableCardDialog({ user }) {
               onChange={(e) => setFullName(e.target.value)}
             />
             <label className="block font-medium">
-              Email{" "}
-              <span className="text-xs text-muted-foreground">(required)</span>
+              Email <span className="text-xs text-muted-foreground">(required)</span>
             </label>
             <input
               className={inputClass}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
             <label className="block font-medium">Phone</label>
             <input
@@ -869,7 +855,7 @@ function ExportableCardDialog({ user }) {
               value={birthday}
               onChange={(e) => setBirthday(e.target.value)}
             />
-            <label className="block font-medium">Location (City, State)</label>
+            <label className="block font-medium">Location</label>
             <input
               className={inputClass}
               value={location}
@@ -906,15 +892,12 @@ function ExportableCardDialog({ user }) {
               onChange={(e) => setFavorites(e.target.value)}
             />
           </div>
+
+          {/* Right column */}
           <div className="space-y-3">
             <label className="block font-medium flex items-center gap-2">
               Bio
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={suggestBio}
-                disabled={generating}
-              >
+              <Button size="sm" variant="ghost" onClick={suggestBio} disabled={generating}>
                 AI Suggest
               </Button>
             </label>
@@ -942,84 +925,33 @@ function ExportableCardDialog({ user }) {
               }
               placeholder="tag1, tag2, ..."
             />
-            <div className="mt-6">
-              <Button onClick={saveFields} className="w-full">
-                Save
+            <DialogFooter className="mt-6 flex gap-2">
+              <Button onClick={saveFields} className="flex-1">
+                Save Draft
               </Button>
-            </div>
-            <Button
-              onClick={handleGenerateCard}
-              className="w-full mt-2"
-              disabled={!fullName || !email || !bio || tags.length === 0}
-            >
-              Generate Card
-            </Button>
+              <Button
+                onClick={handleGenerateCard}
+                className="flex-1"
+                disabled={!fullName || !email || !bio || tags.length === 0}
+              >
+                Generate
+              </Button>
+            </DialogFooter>
           </div>
         </div>
-        {/* Card Preview */}
-        <div className="flex justify-center mt-8">
-          <div className="w-[400px] rounded-2xl shadow-xl bg-white p-6 flex flex-col items-center gap-2 border border-primary">
-            <div className="text-2xl font-bold mb-1">{fullName}</div>
-            <div className="text-sm text-muted-foreground mb-2">{location}</div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag, i) => (
-                <span
-                  key={i}
-                  className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="italic text-center text-sm mb-2">{bio}</div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Birthday: {birthday}
-            </div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Allergies: {allergies}
-            </div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Facts: {facts}
-            </div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Hobbies: {hobbies}
-            </div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Food: {food}
-            </div>
-            <div className="text-xs text-muted-foreground mb-1">
-              Favorites: {favorites}
-            </div>
-            <div className="flex flex-col gap-1 mt-2">
-              <span className="text-xs">
-                <b>Email:</b> {email}
-              </span>
-              {phone && (
-                <span className="text-xs">
-                  <b>Phone:</b> {phone}
-                </span>
-              )}
-              {social && (
-                <span className="text-xs">
-                  <b>Social:</b> {social}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Generated Cards List */}
+
+        {/* Previous cards */}
         {generatedCards.length > 0 && (
           <div className="mt-8">
-            <div className="font-semibold mb-2">Generated Cards</div>
+            <h4 className="font-semibold mb-2">Your Previous Cards</h4>
             <div className="flex flex-col gap-2">
-              {generatedCards.map((card) => (
+              {generatedCards.map((c: any) => (
                 <Button
-                  key={card.id}
+                  key={c.id}
                   variant="outline"
-                  className="justify-start"
-                  onClick={() => navigate(`/exported-card/${card.id}`)}
+                  onClick={() => navigate(`/exported-card/${c.id}`)}
                 >
-                  {card.fullName} — {card.bio.slice(0, 32)}...
+                  {c.fullName} — {c.bio.slice(0, 20)}…
                 </Button>
               ))}
             </div>

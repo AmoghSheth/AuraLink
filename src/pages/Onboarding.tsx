@@ -423,7 +423,7 @@ const Onboarding = () => {
                       <h3 className="font-semibold text-primary">Ready to create your PersonaCard!</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Our AI will analyze your preferences and create a unique PersonaCard that represents your taste and personality.
+                      Qloo AI will analyze your preferences and create a unique PersonaCard that represents your taste and personality.
                     </p>
                   </div>
                 )}
