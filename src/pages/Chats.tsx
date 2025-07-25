@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabaseClient";
 
 interface ChatUser {
   id: string;
@@ -89,11 +91,49 @@ interface Message {
   isSending?: boolean;
 }
 
+interface ChatMessage {
+  id: string;
+  sender_username: string;
+  receiver_username: string;
+  content: string;
+  files?: AttachedFile[];
+  created_at: string;
+  is_delivered: boolean;
+  is_read: boolean;
+  isSending?: boolean;
+}
+
+interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string;
+  friends?: string[];
+  last_message_time?: string;
+  bio?: string;
+  interests?: string[];
+  mutualFriends?: number;
+  location?: string;
+  joinedDate?: string;
+  email?: string;
+  phone?: string;
+  openai_persona?: string;
+  phone_number?: string;
+}
+
+// Add this interface for friend data with unread count
+interface FriendWithUnreadCount extends UserProfile {
+  unread_count: number;
+}
+
 const Chats = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [chatFriends, setChatFriends] = useState<FriendWithUnreadCount[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(
     userId || null
   );
@@ -103,52 +143,136 @@ const Chats = () => {
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [isChatOptionsOpen, setIsChatOptionsOpen] = useState(false);
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      senderId: "other",
-      content: "Hey! How are you doing today?",
-      timestamp: "10:30 AM",
-      type: "text",
-      isDelivered: true,
-    },
-    {
-      id: "2",
-      senderId: "me",
-      content:
-        "I'm doing great! Just finished a really interesting book. How about you?",
-      timestamp: "10:32 AM",
-      type: "text",
-      isDelivered: true,
-    },
-    {
-      id: "3",
-      senderId: "other",
-      content:
-        "That's awesome! What book was it? I'm always looking for good recommendations 📚",
-      timestamp: "10:35 AM",
-      type: "text",
-      isDelivered: true,
-    },
-    {
-      id: "4",
-      senderId: "me",
-      content:
-        "It was 'Atomic Habits' by James Clear. Really changed my perspective on building good habits and breaking bad ones. Highly recommend it!",
-      timestamp: "10:38 AM",
-      type: "text",
-      isDelivered: true,
-    },
-    {
-      id: "5",
-      senderId: "other",
-      content:
-        "That sounds like a great idea! I'd love to join you for hiking this weekend.",
-      timestamp: "2 min ago",
-      type: "text",
-      isDelivered: true,
-    },
-  ]);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+
+  // Fetch current user and their friends
+  useEffect(() => {
+    const fetchUserAndFriends = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get current user's profile
+      const { data: profile } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setCurrentUser(profile);
+
+        // Fetch friends with their last message time and unread counts
+        if (profile.friends && profile.friends.length > 0) {
+          const { data: friends } = await supabase
+            .from("users")
+            .select(`
+              *,
+              messages!inner(count)
+            `)
+            .in("username", profile.friends)
+            .eq('messages.receiver_username', profile.username)
+            .eq('messages.is_read', false)
+            .order("last_message_time", { ascending: false, nullsFirst: false });
+
+          // Calculate total unread messages
+          const total = friends?.reduce((sum, friend) => sum + (friend.messages?.[0]?.count || 0), 0) || 0;
+          setTotalUnreadCount(total);
+
+          // Format friends with unread counts
+          const friendsWithCounts = friends?.map(friend => ({
+            ...friend,
+            unread_count: friend.unread_count?.[0]?.count || 0
+          })) || [];
+
+          setChatFriends(friendsWithCounts);
+        }
+      }
+    };
+
+    fetchUserAndFriends();
+
+    // Set up real-time subscription for new messages
+    const channel = supabase
+      .channel('new_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_username=eq.${currentUser?.username}`
+        },
+        () => {
+          // Refresh friends list when new message arrives
+          fetchUserAndFriends();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentUser?.username]);
+
+  // Fetch messages when chat is selected
+  useEffect(() => {
+    if (!selectedChat || !currentUser) return;
+
+    const fetchMessages = async () => {
+      // First get the selected user's profile
+      const { data: receiver } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', selectedChat)
+        .single();
+
+      if (!receiver?.username) return;
+
+      // Fetch messages where either user is sender or receiver
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_username.eq.${currentUser.username},receiver_username.eq.${receiver.username}),and(sender_username.eq.${receiver.username},receiver_username.eq.${currentUser.username})`)
+        .order('created_at');
+
+      setMessages(messages || []);
+
+      // Mark messages as read
+      await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .match({
+          sender_username: receiver.username,
+          receiver_username: currentUser.username,
+          is_read: false
+        });
+    };
+
+    fetchMessages();
+
+    // Set up real-time subscription for new messages
+    const channel = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_username=eq.${currentUser.username}`
+        },
+        (payload) => {
+          setMessages(prev => [...prev, payload.new as ChatMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [selectedChat, currentUser]);
 
   // Mock data for styling purposes - enhanced with more details
   const mockChats: ChatUser[] = [
@@ -318,9 +442,10 @@ const Chats = () => {
           size: file.size,
           type: file.type,
           url: e.target?.result as string,
-          preview: file.type.startsWith("image/")
-            ? (e.target?.result as string)
-            : undefined,
+          preview:
+            file.type.startsWith("image/")
+              ? (e.target?.result as string)
+              : undefined,
         };
 
         setAttachedFiles((prev) => [...prev, attachedFile]);
@@ -339,46 +464,71 @@ const Chats = () => {
     setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
-  const handleSendMessage = () => {
+  // Update the handleSendMessage function
+  const handleSendMessage = async () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return;
+    if (!currentUser || !selectedChat) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: "me",
+    // Get the selected friend's profile
+    const { data: receiver } = await supabase
+      .from('users')
+      .select('username')
+      .eq('id', selectedChat)
+      .single();
+
+    if (!receiver?.username) {
+      toast.error("Couldn't find recipient");
+      return;
+    }
+
+    const newMessage = {
+      sender_username: currentUser.username,
+      receiver_username: receiver.username,
       content: messageInput.trim(),
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      type: attachedFiles.length > 0 ? "file" : "text",
-      files: attachedFiles.length > 0 ? [...attachedFiles] : undefined,
-      isDelivered: false,
-      isSending: true,
+      files: attachedFiles.length > 0 ? attachedFiles : null,
+      created_at: new Date().toISOString(),
+      is_delivered: false,
+      is_read: false
     };
 
-    // Add message immediately to UI
-    setMessages((prev) => [...prev, newMessage]);
-    setMessageInput("");
+    // Optimistically add message to UI
+    const tempMessage = { ...newMessage, id: Date.now().toString(), isSending: true };
+    setMessages(prev => [...prev, tempMessage as ChatMessage]);
+
+    // Clear input and files
+    setMessageInput('');
     setAttachedFiles([]);
 
-    // Show success toast
-    toast.success("Message sent!", {
-      description:
-        attachedFiles.length > 0
-          ? `Sent with ${attachedFiles.length} file(s)`
-          : undefined,
-    });
+    try {
+      // Insert the message
+      const { data, error } = await supabase
+        .from('messages')
+        .insert(newMessage)
+        .select()
+        .single();
 
-    // Simulate message delivery after a short delay
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === newMessage.id
-            ? { ...msg, isSending: false, isDelivered: true }
-            : msg
+      if (error) throw error;
+
+      // Update messages with the actual message from the database
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === tempMessage.id ? { ...data, isSending: false } : msg
         )
       );
-    }, 1500);
+
+      // Update last message time for both users
+      const now = new Date().toISOString();
+      await supabase
+        .from('users')
+        .update({ last_message_time: now })
+        .in('username', [currentUser.username, receiver.username]);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Remove the temporary message if sending failed
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      toast.error('Failed to send message');
+    }
   };
 
   const handleChatSelect = (chatId: string) => {
@@ -510,12 +660,11 @@ const Chats = () => {
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold tracking-tight">Messages</h2>
-                <Badge
-                  variant="secondary"
-                  className="bg-primary/10 text-primary"
-                >
-                  {mockChats.filter((chat) => chat.unreadCount > 0).length} new
-                </Badge>
+                {totalUnreadCount > 0 && (
+                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                    {totalUnreadCount} new
+                  </Badge>
+                )}
               </div>
 
               {/* Search Bar */}
@@ -532,46 +681,44 @@ const Chats = () => {
               {/* Chat List */}
               <ScrollArea className="flex-1">
                 <div className="space-y-2">
-                  {mockChats.map((chat) => (
+                  {chatFriends.map((friend) => (
                     <div
-                      key={chat.id}
-                      onClick={() => handleChatSelect(chat.id)}
-                      className={`p-4 rounded-xl cursor-pointer transition-all duration-300 hover:bg-muted/50 hover:shadow-md ${
-                        selectedChat === chat.id
-                          ? "bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 shadow-lg"
-                          : "hover:scale-[1.02] hover:shadow-sm"
+                      key={friend.id}
+                      onClick={() => setSelectedChat(friend.username)}
+                      className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-colors ${
+                        selectedChat === friend.username ? "bg-primary/10" : ""
                       }`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-3">
                         <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={chat.avatar} />
-                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold">
-                              {chat.name.charAt(0)}
-                            </AvatarFallback>
+                          <Avatar>
+                            <AvatarImage src={friend.avatar_url} />
+                            <AvatarFallback>{friend.full_name[0]}</AvatarFallback>
                           </Avatar>
-                          {chat.isOnline && (
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                          {friend.unread_count > 0 && (
+                            <Badge 
+                              variant="secondary" 
+                              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-primary text-primary-foreground"
+                            >
+                              {friend.unread_count}
+                            </Badge>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-sm truncate">
-                              {chat.name}
-                            </h3>
-                            <span className="text-xs text-muted-foreground">
-                              {chat.timestamp}
-                            </span>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium truncate">{friend.full_name}</h3>
+                            {friend.last_message_time && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(friend.last_message_time), { addSuffix: true })}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate leading-relaxed">
-                            {chat.lastMessage}
+                          <p className="text-sm text-muted-foreground truncate">
+                            {friend.last_message_time
+                              ? "Last message sent"
+                              : "No messages yet"}
                           </p>
                         </div>
-                        {chat.unreadCount > 0 && (
-                          <Badge className="bg-primary text-primary-foreground min-w-[20px] h-5 text-xs rounded-full">
-                            {chat.unreadCount}
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -638,14 +785,14 @@ const Chats = () => {
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.senderId === "me"
+                          message.sender_username === currentUser?.username
                             ? "justify-end"
                             : "justify-start"
                         }`}
                       >
                         <div
                           className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
-                            message.senderId === "me"
+                            message.sender_username === currentUser?.username
                               ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground ml-12"
                               : "bg-gradient-to-r from-muted to-muted/80 mr-12"
                           } ${message.isSending ? "opacity-70" : ""}`}
@@ -655,28 +802,37 @@ const Chats = () => {
                               {message.content}
                             </p>
                           )}
-                          {renderMessageFiles(message)}
+                          {renderMessageFiles({
+                            id: message.id,
+                            senderId: message.sender_username,
+                            content: message.content,
+                            timestamp: message.created_at,
+                            type: message.files ? "file" : "text",
+                            files: message.files,
+                            isDelivered: message.is_delivered,
+                            isSending: message.isSending
+                          })}
                           <div
                             className={`flex items-center justify-between mt-1 ${
-                              message.senderId === "me"
+                              message.sender_username === currentUser?.username
                                 ? "flex-row-reverse"
                                 : ""
                             }`}
                           >
                             <p
                               className={`text-xs ${
-                                message.senderId === "me"
+                                message.sender_username === currentUser?.username
                                   ? "text-primary-foreground/70"
                                   : "text-muted-foreground"
                               }`}
                             >
-                              {message.timestamp}
+                              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                             </p>
-                            {message.senderId === "me" && (
+                            {message.sender_username === currentUser?.username && (
                               <div className="flex items-center gap-1 ml-2">
                                 {message.isSending ? (
                                   <Loader2 className="w-3 h-3 animate-spin text-primary-foreground/50" />
-                                ) : message.isDelivered ? (
+                                ) : message.is_delivered ? (
                                   <CheckCircle2 className="w-3 h-3 text-primary-foreground/70" />
                                 ) : (
                                   <Clock className="w-3 h-3 text-primary-foreground/50" />
