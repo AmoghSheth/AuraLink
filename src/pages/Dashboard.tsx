@@ -205,7 +205,7 @@ const Dashboard = () => {
 
       // 7) Fetch all groups
       const { data: groupsData, error: groupsError } = await supabase
-        .from<Group>("groups")
+        .from("groups")
         .select("*");
 
       if (groupsError) {
@@ -340,8 +340,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
-      <div className="purple-glow" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       {/* NAV */}
       <nav className="border-b bg-card/30 backdrop-blur-xl sticky top-0 z-50 glass-effect">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">

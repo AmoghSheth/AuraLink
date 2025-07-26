@@ -238,8 +238,7 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
-      <div className="purple-glow" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
           <Link to="/dashboard">
@@ -289,8 +288,7 @@ const Search = () => {
                   key={person.id}
                   user={{
                     ...person,
-                    name: person.full_name,
-                    tags: person.interests,
+                    bio: person.openai_persona,
                   }}
                   showActions={true}
                   customActions={personaCardActions(person)}

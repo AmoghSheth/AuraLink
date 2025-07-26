@@ -111,27 +111,24 @@
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   }
   
-  /* Purple Glow Effect */
-  .purple-glow-container {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .purple-glow {
+  /* Cursor Following Purple Glow Effect */
+  .cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 30%, transparent 70%);
+    border-radius: 50%;
     pointer-events: none;
-    position: absolute;
-    z-index: 0;
-    width: 320px;
-    height: 160px;
-    background: radial-gradient(ellipse at center, #c084fc 0%, rgba(192, 132, 252, 0.4) 40%, transparent 80%);
-    filter: blur(60px);
-    opacity: 0;
+    z-index: 1;
     transform: translate(-50%, -50%);
     transition: opacity 0.3s ease;
+    opacity: 0;
   }
   
-  .purple-glow-container:hover .purple-glow {
-    opacity: 0.6;
+  .cursor-glow.active {
+    opacity: 1;
   }
   
   /* Enhanced Glass Effect */
