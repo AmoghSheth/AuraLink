@@ -238,38 +238,39 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card/50 backdrop-blur">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
+      <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
           <Link to="/dashboard">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
-            <span className="text-xl font-bold">AuraLink</span>
+            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" />
+            <span className="text-xl font-bold gradient-text">AuraLink</span>
           </Link>
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Discover People</h1>
-          <p className="text-muted-foreground">
+      <div className="container mx-auto px-6 py-8 relative z-10">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2 gradient-text">Discover People</h1>
+          <p className="text-muted-foreground text-lg">
             Find others who share your interests and values
           </p>
         </div>
 
-        <Card className="mb-6">
+        <Card className="mb-6 glass-effect">
           <CardContent className="p-6">
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 transition-colors duration-200" />
               <Input
                 placeholder="Search by name, username, or interests..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200"
               />
             </div>
           </CardContent>
@@ -277,11 +278,12 @@ const Search = () => {
 
         {isLoading ? (
           <div className="text-center py-12">
-            <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+            <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary mb-4" />
+            <p className="text-muted-foreground">Finding amazing people...</p>
           </div>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-animation">
               {filteredUsers.map((person) => (
                 <PersonaCard
                   key={person.id}
@@ -296,13 +298,13 @@ const Search = () => {
               ))}
             </div>
             {searchQuery && filteredUsers.length === 0 && (
-              <Card className="text-center py-12 mt-6">
+              <Card className="text-center py-12 mt-6 glass-effect">
                 <CardContent>
-                  <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
+                  <SearchIcon className="w-16 h-16 text-muted-foreground mx-auto mb-6 animate-bounce-soft" />
+                  <h3 className="text-xl font-semibold mb-2 gradient-text">
                     No results found
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     Try adjusting your search terms.
                   </p>
                 </CardContent>

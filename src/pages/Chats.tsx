@@ -624,14 +624,15 @@ const Chats = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
       {/* Navigation Header */}
-      <nav className="border-b bg-card/50 backdrop-blur sticky top-0 z-50">
+      <nav className="border-b bg-card/30 backdrop-blur-xl sticky top-0 z-50 glass-effect">
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
@@ -639,13 +640,13 @@ const Chats = () => {
                 <img
                   src="/logo.png"
                   alt="AuraLink Logo"
-                  className="w-10 h-10"
+                  className="w-10 h-10 transition-transform duration-300 hover:scale-110"
                 />
-                <span className="text-2xl font-bold">AuraLink</span>
+                <span className="text-2xl font-bold gradient-text">AuraLink</span>
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
                 <Settings className="w-4 h-4" />
               </Button>
             </div>
@@ -653,15 +654,15 @@ const Chats = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-6 py-8 max-w-7xl relative z-10">
         <div className="grid lg:grid-cols-4 gap-6 h-[calc(100vh-180px)]">
           {/* Chat List Sidebar */}
-          <Card className="lg:col-span-1 flex flex-col bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50">
+          <Card className="lg:col-span-1 flex flex-col glass-effect">
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">Messages</h2>
+                <h2 className="text-2xl font-bold tracking-tight gradient-text">Messages</h2>
                 {totalUnreadCount > 0 && (
-                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse">
                     {totalUnreadCount} new
                   </Badge>
                 )}
@@ -669,12 +670,12 @@ const Chats = () => {
 
               {/* Search Bar */}
               <div className="relative mb-6">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors duration-200" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50"
+                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200"
                 />
               </div>
 
@@ -685,8 +686,8 @@ const Chats = () => {
                     <div
                       key={friend.id}
                       onClick={() => setSelectedChat(friend.username)}
-                      className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-colors ${
-                        selectedChat === friend.username ? "bg-primary/10" : ""
+                      className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:scale-[1.02] hover-lift ${
+                        selectedChat === friend.username ? "bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -698,7 +699,7 @@ const Chats = () => {
                           {friend.unread_count > 0 && (
                             <Badge 
                               variant="secondary" 
-                              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-primary text-primary-foreground"
+                              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-r from-primary to-accent text-primary-foreground animate-pulse shadow-lg"
                             >
                               {friend.unread_count}
                             </Badge>
@@ -728,26 +729,26 @@ const Chats = () => {
           </Card>
 
           {/* Main Chat Area */}
-          <Card className="lg:col-span-3 flex flex-col bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50">
+          <Card className="lg:col-span-3 flex flex-col glass-effect">
             {selectedChat && currentChatUser ? (
               <>
                 {/* Chat Header */}
-                <div className="p-6 border-b border-border/50">
+                <div className="p-6 border-b border-border/50 bg-gradient-to-r from-card/50 to-card/30">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <Avatar className="h-12 w-12">
+                        <Avatar className="h-12 w-12 shadow-lg">
                           <AvatarImage src={currentChatUser.avatar} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-semibold text-lg">
+                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold text-lg">
                             {currentChatUser.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         {currentChatUser.isOnline && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">
+                        <h3 className="font-semibold text-lg gradient-text">
                           {currentChatUser.name}
                         </h3>
                         <p className="text-sm text-muted-foreground">
@@ -761,7 +762,7 @@ const Chats = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-full hover:bg-primary/10 transition-colors"
+                        className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                         onClick={() => setIsUserInfoOpen(true)}
                       >
                         <Info className="w-4 h-4" />
@@ -769,7 +770,7 @@ const Chats = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-full hover:bg-primary/10 transition-colors"
+                        className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                         onClick={() => setIsChatOptionsOpen(true)}
                       >
                         <MoreVertical className="w-4 h-4" />
@@ -791,10 +792,10 @@ const Chats = () => {
                         }`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
+                          className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
                             message.sender_username === currentUser?.username
-                              ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground ml-12"
-                              : "bg-gradient-to-r from-muted to-muted/80 mr-12"
+                              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground ml-12"
+                              : "bg-gradient-to-r from-card/90 to-card/70 mr-12 glass-effect"
                           } ${message.isSending ? "opacity-70" : ""}`}
                         >
                           {message.content && (
@@ -847,10 +848,10 @@ const Chats = () => {
                 </ScrollArea>
 
                 {/* Message Input */}
-                <div className="p-6 border-t border-border/50">
+                <div className="p-6 border-t border-border/50 bg-gradient-to-r from-card/50 to-card/30">
                   {/* File Attachments Preview */}
                   {attachedFiles.length > 0 && (
-                    <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="mb-4 p-3 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/50 glass-effect">
                       <div className="flex items-center gap-2 mb-2">
                         <Paperclip className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm font-medium">
@@ -876,7 +877,7 @@ const Chats = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full hover:bg-primary/10 transition-colors"
+                      className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                       onClick={handleFileAttachment}
                     >
                       <Paperclip className="w-4 h-4" />
@@ -889,12 +890,12 @@ const Chats = () => {
                         onKeyPress={(e) =>
                           e.key === "Enter" && handleSendMessage()
                         }
-                        className="pr-12 bg-background/50 border-border/50 focus:border-primary/50 rounded-full"
+                        className="pr-12 bg-background/50 border-border/50 focus:border-primary/50 rounded-full transition-all duration-200 focus:scale-[1.02]"
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full hover:scale-110 transition-transform duration-200"
                       >
                         <Smile className="w-4 h-4" />
                       </Button>
@@ -904,7 +905,7 @@ const Chats = () => {
                       disabled={
                         !messageInput.trim() && attachedFiles.length === 0
                       }
-                      className="rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
                       size="icon"
                     >
                       <Send className="w-4 h-4" />
@@ -915,14 +916,14 @@ const Chats = () => {
             ) : (
               /* Empty State */
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="text-center animate-fade-in">
+                  <div className="w-24 h-24 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg float-animation">
                     <Send className="w-10 h-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-2">
+                  <h3 className="text-2xl font-semibold mb-2 gradient-text">
                     Start a Conversation
                   </h3>
-                  <p className="text-muted-foreground max-w-md">
+                  <p className="text-muted-foreground max-w-md text-lg">
                     Select a chat from the sidebar to start messaging, or go
                     back to discover new people to connect with.
                   </p>

@@ -135,62 +135,63 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card/50 backdrop-blur">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
+      <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
-          <Link to="/dashboard"><Button variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button></Link>
-          <Link to="/dashboard" className="flex items-center gap-2"><img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" /><span className="text-xl font-bold">AuraLink</span></Link>
+          <Link to="/dashboard"><Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200"><ArrowLeft className="w-4 h-4" /></Button></Link>
+          <Link to="/dashboard" className="flex items-center gap-2"><img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" /><span className="text-xl font-bold gradient-text">AuraLink</span></Link>
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
+      <div className="container mx-auto px-6 py-8 max-w-4xl relative z-10">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2 gradient-text">Settings</h1>
+          <p className="text-muted-foreground text-lg">Manage your account and preferences</p>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
-            <Card><CardContent className="p-4"><nav className="space-y-2">
+            <Card className="glass-effect"><CardContent className="p-4"><nav className="space-y-2">
               {[{ id: "profile", label: "Profile", icon: User }, { id: "privacy", label: "Privacy", icon: Shield }].map((item) => (
-                <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-accent-foreground hover:bg-accent"}`}>
+                <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-300 hover:scale-105 ${activeTab === item.id ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-accent-foreground hover:bg-accent/50"}`}>
                   <item.icon className="w-4 h-4" />{item.label}
                 </button>
               ))}
             </nav></CardContent></Card>
           </div>
 
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 stagger-animation">
             {isLoading ? <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin" /></div> : !profile ? <p>Could not load profile.</p> :
             <>
               {activeTab === "profile" && (
                 <div className="space-y-6">
-                  <Card>
-                    <CardHeader><CardTitle>Profile Information</CardTitle></CardHeader>
+                  <Card className="glass-effect">
+                    <CardHeader><CardTitle className="gradient-text">Profile Information</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="name">Name</Label>
-                          <Input id="name" value={profile.full_name} onChange={(e) => handleProfileUpdate("full_name", e.target.value)} />
+                          <Input id="name" value={profile.full_name} onChange={(e) => handleProfileUpdate("full_name", e.target.value)} className="bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200" />
                         </div>
                         <div>
                           <Label htmlFor="age">Age</Label>
-                          <Input id="age" type="number" value={profile.age} onChange={(e) => handleProfileUpdate("age", e.target.value)} />
+                          <Input id="age" type="number" value={profile.age} onChange={(e) => handleProfileUpdate("age", e.target.value)} className="bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200" />
                         </div>
                       </div>
                       <div>
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={profile.email} disabled />
+                        <Input id="email" type="email" value={profile.email} disabled className="bg-muted/30" />
                       </div>
                       <div>
                         <Label htmlFor="bio">Bio</Label>
-                        <textarea id="bio" value={profile.bio} onChange={(e) => handleProfileUpdate("bio", e.target.value)} className="w-full p-3 border rounded-md resize-none h-20 text-sm" />
+                        <textarea id="bio" value={profile.bio} onChange={(e) => handleProfileUpdate("bio", e.target.value)} className="w-full p-3 border rounded-md resize-none h-20 text-sm bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200" />
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader><CardTitle>Your Tags</CardTitle></CardHeader>
+                  <Card className="glass-effect">
+                    <CardHeader><CardTitle className="gradient-text">Your Tags</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                       <TagEditor title="Interests" tagType="interests" />
                       <TagEditor title="Values" tagType="values" />
@@ -198,7 +199,7 @@ const Settings = () => {
                     </CardContent>
                   </Card>
 
-                  <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full">
+                  <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full hover:scale-105 transition-transform duration-200">
                     {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : "Save All Changes"}
                   </Button>
                 </div>

@@ -386,24 +386,25 @@ const Matching = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
+      <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
           <Link to="/dashboard">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
-            <span className="text-xl font-bold">AuraLink</span>
+            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" />
+            <span className="text-xl font-bold gradient-text">AuraLink</span>
           </Link>
         </div>
       </nav>
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Find Your Match</h1>
-          <p className="text-muted-foreground">
+      <div className="container mx-auto px-6 py-8 max-w-4xl relative z-10">
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2 gradient-text">Find Your Match</h1>
+          <p className="text-muted-foreground text-lg">
             Discover people who share your interests and values
           </p>
         </div>
@@ -413,7 +414,7 @@ const Matching = () => {
             <Button
               variant="outline"
               onClick={() => handleInteraction("passed")}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 glass-effect"
             >
               <RefreshCw className="w-4 h-4" />
               Find Another Match

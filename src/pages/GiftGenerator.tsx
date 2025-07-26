@@ -194,30 +194,31 @@ const GiftGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
       {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur">
+      <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
-          <Link to="/dashboard"><Button variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button></Link>
-          <Link to="/dashboard" className="flex items-center gap-2"><img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" /><span className="text-xl font-bold">AuraLink</span></Link>
+          <Link to="/dashboard"><Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200"><ArrowLeft className="w-4 h-4" /></Button></Link>
+          <Link to="/dashboard" className="flex items-center gap-2"><img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" /><span className="text-xl font-bold gradient-text">AuraLink</span></Link>
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">AI Gift Generator</h1>
-          <p className="text-muted-foreground">Personalized gift suggestions based on personality.</p>
+      <div className="container mx-auto px-6 py-8 max-w-6xl relative z-10">
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2 gradient-text">AI Gift Generator</h1>
+          <p className="text-muted-foreground text-lg">Personalized gift suggestions based on personality.</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Friend Selection */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Gift className="w-5 h-5" />Select Friend</CardTitle></CardHeader>
+          <div className="space-y-6 stagger-animation">
+            <Card className="glass-effect">
+              <CardHeader><CardTitle className="flex items-center gap-2 gradient-text"><Gift className="w-5 h-5" />Select Friend</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input placeholder="Search friends..." value={friendSearchQuery} onChange={(e) => setFriendSearchQuery(e.target.value)} className="pl-10" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 transition-colors duration-200" />
+                  <Input placeholder="Search friends..." value={friendSearchQuery} onChange={(e) => setFriendSearchQuery(e.target.value)} className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200" />
                 </div>
                 
                 <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -225,9 +226,9 @@ const GiftGenerator = () => {
                     <p className="text-muted-foreground text-sm">Loading friends...</p>
                   ) : filteredFriends.length > 0 ? (
                     filteredFriends.map((friend) => (
-                      <Card key={friend.id} className={`cursor-pointer transition-all ${selectedUser?.id === friend.id ? "ring-2 ring-primary" : "hover:bg-accent"}`} onClick={() => handleSelectUser(friend)}>
+                      <Card key={friend.id} className={`cursor-pointer transition-all duration-300 hover-lift ${selectedUser?.id === friend.id ? "ring-2 ring-primary shadow-lg bg-gradient-to-r from-primary/10 to-accent/10" : "hover:bg-accent/50"}`} onClick={() => handleSelectUser(friend)}>
                         <CardContent className="p-3 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">{friend.full_name.charAt(0)}</div>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center font-semibold text-primary shadow-md">{friend.full_name.charAt(0)}</div>
                           <div>
                             <p className="font-medium text-sm">{friend.full_name}</p>
                             <p className="text-xs text-muted-foreground">@{friend.username}</p>
@@ -236,26 +237,26 @@ const GiftGenerator = () => {
                       </Card>
                     ))
                   ) : (
-                    <p className="text-muted-foreground text-sm text-center py-4">No friends found.</p>
+                    <p className="text-muted-foreground text-sm text-center py-8">No friends found.</p>
                   )}
                 </div>
 
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground mb-2">Or enter a username:</p>
                   <div className="flex gap-2">
-                    <Input placeholder="@username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} />
-                    <Button variant="secondary" onClick={handleFetchUserByUsername}><UserCheck className="w-4 h-4" /></Button>
+                    <Input placeholder="@username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} className="bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200" />
+                    <Button variant="secondary" onClick={handleFetchUserByUsername} className="hover:scale-105 transition-transform duration-200"><UserCheck className="w-4 h-4" /></Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {selectedUser && (
-              <Card>
-                <CardHeader><CardTitle className="text-lg">Selected Friend</CardTitle></CardHeader>
+              <Card className="glass-effect animate-scale-in">
+                <CardHeader><CardTitle className="text-lg gradient-text">Selected Friend</CardTitle></CardHeader>
                 <CardContent>
                   <PersonaCard user={selectedUser} showActions={false} variant="compact" />
-                  <Button className="w-full mt-4" onClick={handleGenerateGifts} disabled={isGenerating}>
+                  <Button className="w-full mt-4 hover:scale-105 transition-transform duration-200" onClick={handleGenerateGifts} disabled={isGenerating}>
                     {isGenerating ? <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" />Generating...</> : <><Sparkles className="w-4 h-4 mr-2" />Generate Gift Ideas</>}
                   </Button>
                 </CardContent>
@@ -264,29 +265,29 @@ const GiftGenerator = () => {
           </div>
 
           {/* Gift Suggestions */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 stagger-animation">
             {isGenerating ? (
-              <Card className="text-center py-16"><CardContent><div className="animate-spin w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full mx-auto mb-4"></div><h3 className="text-xl font-semibold mb-2">Analyzing personality...</h3><p className="text-muted-foreground">AI is creating personalized gift recommendations</p></CardContent></Card>
+              <Card className="text-center py-16 glass-effect"><CardContent><div className="animate-spin w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full mx-auto mb-6"></div><h3 className="text-2xl font-semibold mb-2 gradient-text">Analyzing personality...</h3><p className="text-muted-foreground text-lg">AI is creating personalized gift recommendations</p></CardContent></Card>
             ) : giftSuggestions ? (
               <div className="space-y-6">
                 {Object.entries(giftSuggestions).map(([category, gifts]) => (
-                  <Card key={category}>
-                    <CardHeader><CardTitle className="capitalize">{category} Gifts</CardTitle></CardHeader>
+                  <Card key={category} className="glass-effect">
+                    <CardHeader><CardTitle className="capitalize gradient-text">{category} Gifts</CardTitle></CardHeader>
                     <CardContent className="grid gap-4">
                       {(gifts as GiftIdea[]).map((gift, index) => (
-                        <Card key={index} className="p-4 bg-muted/30">
+                        <Card key={index} className="p-4 bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
                               <h4 className="font-semibold text-lg mb-1">{gift.name}</h4>
                               <p className="text-muted-foreground text-sm mb-2">{gift.description}</p>
-                              <Badge className="bg-primary text-primary-foreground">{gift.price}</Badge>
+                              <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md">{gift.price}</Badge>
                             </div>
                             <div className="flex gap-2 ml-4">
-                              <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(gift.name)}><Copy className="w-4 h-4" /></Button>
-                              {gift.link && <a href={gift.link} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="outline"><ExternalLink className="w-4 h-4" /></Button></a>}
+                              <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(gift.name)} className="hover:scale-105 transition-transform duration-200"><Copy className="w-4 h-4" /></Button>
+                              {gift.link && <a href={gift.link} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="outline" className="hover:scale-105 transition-transform duration-200"><ExternalLink className="w-4 h-4" /></Button></a>}
                             </div>
                           </div>
-                          <div className="bg-primary/5 rounded-lg p-3 border-l-4 border-primary"><p className="text-sm text-muted-foreground"><strong>Why this fits:</strong> {gift.reason}</p></div>
+                          <div className="bg-gradient-to-r from-primary/10 to-accent/5 rounded-lg p-3 border-l-4 border-primary glass-effect"><p className="text-sm text-muted-foreground"><strong>Why this fits:</strong> {gift.reason}</p></div>
                         </Card>
                       ))}
                     </CardContent>
@@ -294,7 +295,7 @@ const GiftGenerator = () => {
                 ))}
               </div>
             ) : (
-              <Card className="text-center py-16"><CardContent><Gift className="w-16 h-16 text-muted-foreground mx-auto mb-6" /><h3 className="text-xl font-semibold mb-4">Select a friend to get started</h3><p className="text-muted-foreground">Choose someone from your friends list or enter their username to generate personalized gift recommendations.</p></CardContent></Card>
+              <Card className="text-center py-16 glass-effect"><CardContent><Gift className="w-20 h-20 text-muted-foreground mx-auto mb-8 float-animation" /><h3 className="text-2xl font-semibold mb-4 gradient-text">Select a friend to get started</h3><p className="text-muted-foreground text-lg">Choose someone from your friends list or enter their username to generate personalized gift recommendations.</p></CardContent></Card>
             )}
           </div>
         </div>

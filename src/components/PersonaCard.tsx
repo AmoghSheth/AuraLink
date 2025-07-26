@@ -70,24 +70,25 @@ const PersonaCard = ({
 
   return (
     <Card
-      className={`group transition-all duration-300 hover:shadow-xl hover:scale-[1.03] ${
+      className={`group transition-all duration-500 hover:shadow-2xl hover:scale-[1.05] purple-glow-container ${
         isCompact ? "p-3" : "p-4"
-      } border border-border/50 hover:border-primary/30 animate-fade-in bg-gradient-to-br from-card to-card/80 backdrop-blur-sm`}
+      } border border-border/30 hover:border-primary/50 animate-fade-in bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-lg glass-effect`}
     >
+      <div className="purple-glow" />
       <CardContent className={`${isCompact ? "p-3" : "p-6"} space-y-4`}>
         {/* Header */}
         <div className="flex items-center gap-4">
           <div
             className={`${
               isCompact ? "w-16 h-16" : "w-20 h-20"
-            } rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center font-bold text-primary transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}
+            } rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center font-bold text-primary transition-all duration-500 group-hover:scale-125 group-hover:rotate-6 shadow-lg`}
           >
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-1">
               <h3
-                className={`font-display font-semibold text-foreground truncate transition-colors duration-200 group-hover:text-primary tracking-tight ${
+                className={`font-display font-semibold text-foreground truncate transition-all duration-300 group-hover:text-primary tracking-tight gradient-text ${
                   isCompact ? "text-base" : "text-lg"
                 }`}
               >
@@ -102,7 +103,7 @@ const PersonaCard = ({
               </span>
             </div>
             {user.mutualFriends && (
-              <p className="text-xs text-muted-foreground animate-slide-in-right">
+              <p className="text-xs text-muted-foreground animate-slide-in-right transition-colors duration-300 group-hover:text-primary/70">
                 {user.mutualFriends} mutual friends
               </p>
             )}
@@ -111,13 +112,13 @@ const PersonaCard = ({
 
         {/* Bio */}
         {!isCompact && displayBio && (
-          <div className="text-sm text-muted-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
+          <div className="text-sm text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground/90">
             {truncatedBio}
             {isBioLong && (
               <Button
                 size="sm"
                 variant="ghost"
-                className="ml-2 text-pink-500 underline hover:bg-pink-50 hover:text-pink-600 px-2 py-0.5"
+                className="ml-2 text-primary underline hover:bg-primary/10 hover:text-primary/80 px-2 py-0.5 transition-all duration-200"
                 onClick={() => setIsDialogOpen(true)}
               >
                 Read More
@@ -141,7 +142,7 @@ const PersonaCard = ({
             (tag, index) => (
               <Badge
                 key={tag}
-                className={`transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm animate-slide-in-left`}
+                className={`transition-all duration-300 hover:scale-110 bg-gradient-to-r from-primary to-accent text-primary-foreground hover:from-primary/90 hover:to-accent/90 px-3 py-1 text-sm animate-slide-in-left shadow-md hover:shadow-lg`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {tag}
@@ -150,7 +151,7 @@ const PersonaCard = ({
           )}
           {hasMoreTags && !showAllTags && (
             <Badge
-              className="transition-all duration-200 hover:scale-105 bg-primary text-primary-foreground hover:bg-primary/80 px-3 py-1 text-sm cursor-pointer"
+              className="transition-all duration-300 hover:scale-110 bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground hover:from-secondary/90 hover:to-secondary/70 px-3 py-1 text-sm cursor-pointer shadow-md"
               onClick={() => setShowAllTags(true)}
             >
               +{tags.length - maxTagsToShow} more
@@ -158,7 +159,7 @@ const PersonaCard = ({
           )}
           {showAllTags && hasMoreTags && (
             <Badge
-              className="transition-all duration-200 hover:scale-105 bg-muted text-muted-foreground hover:bg-muted/80 px-3 py-1 text-sm cursor-pointer"
+              className="transition-all duration-300 hover:scale-110 bg-muted/80 text-muted-foreground hover:bg-muted/60 px-3 py-1 text-sm cursor-pointer"
               onClick={() => setShowAllTags(false)}
             >
               Show less
@@ -174,12 +175,12 @@ const PersonaCard = ({
             <div
               className={`flex gap-2 ${
                 isCompact ? "pt-2" : "pt-4"
-              } opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0`}
+              } opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0`}
             >
               <Button
                 size={isCompact ? "sm" : "default"}
                 variant="outline"
-                className="flex-1 font-semibold shadow-pink-200 hover:scale-105 hover:shadow-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+                className="flex-1 font-semibold hover:scale-110 hover:shadow-xl hover:bg-primary hover:text-primary-foreground transition-all duration-300 glass-effect"
                 onClick={() => onChatClick?.(user)}
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
@@ -188,7 +189,7 @@ const PersonaCard = ({
               <Button
                 size={isCompact ? "sm" : "default"}
                 variant="outline"
-                className="flex-1 font-semibold shadow-pink-200 hover:scale-105 hover:shadow-lg hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                className="flex-1 font-semibold hover:scale-110 hover:shadow-xl hover:bg-accent hover:text-accent-foreground transition-all duration-300 glass-effect"
                 onClick={() => onShareClick?.(user)}
               >
                 <Share2 className="w-4 h-4" />
@@ -197,7 +198,7 @@ const PersonaCard = ({
               <Button
                 size={isCompact ? "sm" : "default"}
                 variant="outline"
-                className="flex-1 font-semibold shadow-pink-200 hover:scale-105 hover:shadow-lg hover:bg-secondary hover:text-secondary-foreground transition-all duration-200"
+                className="flex-1 font-semibold hover:scale-110 hover:shadow-xl hover:bg-secondary hover:text-secondary-foreground transition-all duration-300 glass-effect"
                 onClick={() => onAddFriendClick?.(user)}
               >
                 <UserPlus className="w-4 h-4" />

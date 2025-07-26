@@ -340,42 +340,43 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
+      <div className="purple-glow" />
       {/* NAV */}
-      <nav className="border-b bg-card/50 backdrop-blur sticky top-0 z-50">
+      <nav className="border-b bg-card/30 backdrop-blur-xl sticky top-0 z-50 glass-effect">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10" />
-            <span className="text-2xl font-bold">AuraLink</span>
+            <img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" />
+            <span className="text-2xl font-bold gradient-text">AuraLink</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/search">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
                 <Search className="w-4 h-4 mr-2" /> Search
               </Button>
             </Link>
             <Link to="/match">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-accent/10 hover:text-accent">
                 <Sparkles className="w-4 h-4 mr-3" /> Match
               </Button>
             </Link>
             <Link to="/friends">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-secondary/10 hover:text-secondary">
                 <Users className="w-4 h-4 mr-2" /> Friends
               </Button>
             </Link>
             <Link to="/gift">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-highlight/10 hover:text-highlight">
                 <Gift className="w-4 h-4 mr-2" /> Gift
               </Button>
             </Link>
             <Link to="/calendar">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive">
                 <CalendarIcon className="w-4 h-4 mr-2" /> Calendar
               </Button>
             </Link>
             <Link to="/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-muted/20">
                 <Settings className="w-4 h-4" />
               </Button>
             </Link>
@@ -384,27 +385,27 @@ const Dashboard = () => {
       </nav>
 
       {/* MAIN */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+      <div className="container mx-auto px-6 py-8 relative z-10">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2 gradient-text">
             Welcome back, {loading ? "..." : userProfile?.full_name.split(" ")[0]}!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             Here's what's happening in your network
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left (2/3) */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 stagger-animation">
             {/* PersonaCard */}
-            <Card>
+            <Card className="float-animation">
               <CardHeader>
-                <CardTitle>Your PersonaCard</CardTitle>
+                <CardTitle className="gradient-text">Your PersonaCard</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full animate-pulse" />
                 ) : personaCardUser ? (
                   <>
                     <PersonaCard user={personaCardUser} showActions={false} />
@@ -420,15 +421,15 @@ const Dashboard = () => {
             </Card>
 
             {/* Recent Matches */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Recent Matches</CardTitle>
+                <CardTitle className="gradient-text">Recent Matches</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingMatches ? (
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full animate-pulse" />
+                    <Skeleton className="h-24 w-full animate-pulse" />
                   </div>
                 ) : recentMatches.length ? (
                   <div className="grid md:grid-cols-2 gap-4">
@@ -445,7 +446,7 @@ const Dashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm text-center">
+                  <p className="text-muted-foreground text-sm text-center py-8">
                     No recent matches. Give someone a like!
                   </p>
                 )}
@@ -453,22 +454,22 @@ const Dashboard = () => {
             </Card>
 
             {/* Activity Feed */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Activity Feed</CardTitle>
+                <CardTitle className="gradient-text">Activity Feed</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingFeed ? (
                   <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full animate-pulse" />
+                    <Skeleton className="h-12 w-full animate-pulse" />
                   </div>
                 ) : activityFeed.length ? (
                   <div className="space-y-4">
                     {activityFeed.map(renderActivity)}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm text-center">
+                  <p className="text-muted-foreground text-sm text-center py-8">
                     No recent activity.
                   </p>
                 )}
@@ -476,9 +477,9 @@ const Dashboard = () => {
             </Card>
 
             {/* Active DMs */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Active DMs</CardTitle>
+                <CardTitle className="gradient-text">Active DMs</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -487,12 +488,12 @@ const Dashboard = () => {
                       activeDms.map((dm) => (
                         <div
                           key={dm.id}
-                          className="min-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
+                          className="min-w-[220px] bg-gradient-to-br from-card/90 to-card/70 rounded-xl p-4 flex flex-col items-center justify-between shadow-lg hover-lift glass-effect"
                         >
                           <img
                             src={dm.avatar_url || "/logo.png"}
                             alt={dm.full_name}
-                            className="w-12 h-12 rounded-full mb-2"
+                            className="w-12 h-12 rounded-full mb-2 shadow-md"
                           />
                           <div className="font-semibold text-base truncate text-center">
                             {dm.full_name}
@@ -507,7 +508,7 @@ const Dashboard = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-muted-foreground text-sm py-8">
                         No active DMs yet.
                       </p>
                     )}
@@ -517,9 +518,9 @@ const Dashboard = () => {
             </Card>
 
             {/* Active Groups */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Active Groups</CardTitle>
+                <CardTitle className="gradient-text">Active Groups</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -528,9 +529,9 @@ const Dashboard = () => {
                       activeGroups.map((g) => (
                         <div
                           key={g.id}
-                          className="min-w-[220px] bg-muted/30 rounded-lg p-4 flex flex-col items-center justify-between shadow-md"
+                          className="min-w-[220px] bg-gradient-to-br from-card/90 to-card/70 rounded-xl p-4 flex flex-col items-center justify-between shadow-lg hover-lift glass-effect"
                         >
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-2 shadow-md">
                             <Users className="w-6 h-6 text-primary" />
                           </div>
                           <div className="font-semibold text-base truncate text-center">
@@ -549,7 +550,7 @@ const Dashboard = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-muted-foreground text-sm py-8">
                         You haven’t joined any groups yet.
                       </p>
                     )}
@@ -560,11 +561,11 @@ const Dashboard = () => {
           </div>
 
           {/* Right (1/3) */}
-          <div className="space-y-6">
+          <div className="space-y-6 stagger-animation">
             {/* Quick Actions */}
-            <Card>
+            <Card className="float-animation">
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="gradient-text">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button asChild className="w-full">
@@ -586,9 +587,9 @@ const Dashboard = () => {
             </Card>
 
             {/* Groups to Join */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Groups to Join</CardTitle>
+                <CardTitle className="gradient-text">Groups to Join</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {loadingGroups ? (
@@ -599,7 +600,7 @@ const Dashboard = () => {
                   suggestedGroups.map((g) => (
                     <div
                       key={g.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                      className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect"
                     >
                       <div>
                         <p className="font-medium text-sm">{g.name}</p>
@@ -618,7 +619,7 @@ const Dashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-sm text-center">
+                  <p className="text-muted-foreground text-sm text-center py-8">
                     No groups found.
                   </p>
                 )}
@@ -629,13 +630,13 @@ const Dashboard = () => {
             </Card>
 
             {/* Your Network */}
-            <Card>
+            <Card className="stagger-animation">
               <CardHeader>
-                <CardTitle>Your Network</CardTitle>
+                <CardTitle className="gradient-text">Your Network</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="text-4xl font-bold gradient-text mb-2">
                     {userProfile?.friends?.length || 0}
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
