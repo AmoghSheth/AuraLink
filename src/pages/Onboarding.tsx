@@ -141,19 +141,26 @@ const Onboarding = () => {
 
         const openAIPrompt = `
           You are an expert in human personality and connection. Based on the detailed user profile for a person named ${allUserData.name}, create an insightful and engaging "Persona Card". 
-          This card should be a short, vibrant paragraph (3-5 sentences) that captures their essence, making them sound like a real, interesting person someone would want to meet.
+          
+          **IMPORTANT FORMATTING REQUIREMENT:**
+          Structure your response as 3-4 distinct, well-formed sentences. Each sentence should focus on a different aspect of their personality and be naturally separated by periods. This will allow the UI to display each sentence as a readable bullet point.
 
-          Instructions:
-          1.  **Synthesize, Don't Just List:** Do not just list the interests. Weave them into a narrative about the user's personality.
-          2.  **Infer Personality:** What do their choices say about them? Are they adventurous, creative, a homebody, intellectual?
-          3.  **Suggest Connection:** Briefly mention what they might be looking for in a friend or partner.
-          4.  **Propose an Activity:** Suggest a fun, creative activity that aligns with their profile.
-          5.  **Tone:** Make it sound warm, authentic, and appealing.
+          **Content Guidelines:**
+          1.  **Personality Essence (Sentence 1):** Capture their core personality traits and what makes them unique
+          2.  **Interests & Passions (Sentence 2):** Weave their interests into a narrative about their lifestyle and passions
+          3.  **Connection Style (Sentence 3):** Describe what they might be looking for in connections and relationships
+          4.  **Activity Suggestion (Sentence 4, optional):** Suggest a meaningful activity that aligns with their profile
+
+          **Style Requirements:**
+          - Each sentence should be complete and impactful on its own
+          - Use warm, authentic, and appealing tone
+          - Make them sound like a real, interesting person someone would want to meet
+          - Avoid run-on sentences - keep each sentence focused and clear
+          - End each sentence with proper punctuation (period, exclamation, or question mark)
 
           **User Profile to Analyze:**
           - **Name:** ${allUserData.name}
           - **Age:** ${allUserData.age}
-          - _
           - **Bio:** "${allUserData.bio}"
           - **Core Interests:** ${allUserData.interests.join(', ')}
           - **Guiding Values:** ${allUserData.values.join(', ')}

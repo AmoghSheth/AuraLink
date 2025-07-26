@@ -156,108 +156,257 @@ const Friends = () => {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container flex items-center justify-center">
+        <div className="purple-glow" />
+        <div className="text-center animate-fade-in relative z-10">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your network...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background purple-glow-container">
       <div className="purple-glow" />
+      
+      {/* Navigation Header */}
       <nav className="border-b bg-card/30 backdrop-blur-xl glass-effect sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center gap-4">
-          <Link to="/dashboard"><Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200"><ArrowLeft className="w-4 h-4" /></Button></Link>
-          <Link to="/dashboard" className="flex items-center gap-2"><img src="/logo.png" alt="AuraLink Logo" className="w-10 h-10 transition-transform duration-300 hover:scale-110" /><span className="text-xl font-bold gradient-text">AuraLink</span></Link>
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Link to="/dashboard">
+              <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <img 
+                src="/logo.png" 
+                alt="AuraLink Logo" 
+                className="w-10 h-10 transition-transform duration-300 hover:scale-110" 
+              />
+              <span className="text-2xl font-display font-bold gradient-text tracking-tight">AuraLink</span>
+            </Link>
+          </div>
         </div>
       </nav>
 
       <div className="container mx-auto px-6 py-8 relative z-10">
+        {/* Header Section */}
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold mb-2 gradient-text">Your Network</h1>
+          <h1 className="text-4xl font-display font-bold mb-2 gradient-text tracking-tight">Your Network</h1>
           <p className="text-muted-foreground text-lg">Manage your friends and pending requests.</p>
         </div>
 
-        <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 glass-effect">
-            <TabsTrigger value="friends" className="transition-all duration-200 hover:scale-105">Friends <Badge className="ml-2 bg-gradient-to-r from-primary/20 to-accent/20 text-primary">{friends.length}</Badge></TabsTrigger>
-            <TabsTrigger value="incoming" className="transition-all duration-200 hover:scale-105">Incoming <Badge className="ml-2 bg-gradient-to-r from-secondary/20 to-secondary/10 text-secondary">{incomingRequests.length}</Badge></TabsTrigger>
-            <TabsTrigger value="outgoing" className="transition-all duration-200 hover:scale-105">Sent <Badge className="ml-2 bg-gradient-to-r from-highlight/20 to-highlight/10 text-highlight">{outgoingRequests.length}</Badge></TabsTrigger>
+        {/* Tabs with improved spacing and animations */}
+        <Tabs defaultValue="friends" className="w-full space-y-6">
+          <TabsList className="grid w-full grid-cols-3 glass-effect h-14 p-1 bg-gradient-to-r from-muted/40 to-muted/20 backdrop-blur-sm">
+            <TabsTrigger 
+              value="friends" 
+              className="relative transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-accent/20 data-[state=active]:text-primary data-[state=active]:shadow-lg rounded-lg font-medium"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Friends 
+              <Badge className="ml-2 bg-gradient-to-r from-primary/20 to-accent/20 text-primary border-primary/20 shadow-sm">
+                {friends.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="incoming" 
+              className="relative transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary/20 data-[state=active]:to-secondary/10 data-[state=active]:text-secondary data-[state=active]:shadow-lg rounded-lg font-medium"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Incoming 
+              <Badge className="ml-2 bg-gradient-to-r from-secondary/20 to-secondary/10 text-secondary border-secondary/20 shadow-sm">
+                {incomingRequests.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="outgoing" 
+              className="relative transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] data-[state=active]:bg-gradient-to-r data-[state=active]:from-highlight/20 data-[state=active]:to-highlight/10 data-[state=active]:text-highlight data-[state=active]:shadow-lg rounded-lg font-medium"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Sent 
+              <Badge className="ml-2 bg-gradient-to-r from-highlight/20 to-highlight/10 text-highlight border-highlight/20 shadow-sm">
+                {outgoingRequests.length}
+              </Badge>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="friends" className="mt-6">
-            <Card className="glass-effect">
-              <CardHeader><CardTitle className="gradient-text">Your Friends</CardTitle></CardHeader>
-              <CardContent>
+          {/* Friends Tab */}
+          <TabsContent value="friends" className="animate-fade-in">
+            <Card className="glass-effect hover-lift transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="gradient-text flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Your Friends
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
                 {friends.length > 0 ? (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-animation">
-                    {friends.map(friend => (
-                      <Card key={friend.id} className="p-4 flex flex-col items-center text-center hover-lift glass-effect">
-                        <Avatar className="w-16 h-16 mb-2 shadow-lg">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {friends.map((friend, index) => (
+                      <Card 
+                        key={friend.id} 
+                        className="p-4 flex flex-col items-center text-center hover-lift glass-effect transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <Avatar className="w-16 h-16 mb-3 shadow-lg ring-2 ring-primary/20 transition-all duration-300 hover:ring-primary/40">
                           <AvatarImage src={friend.avatar_url} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold">{friend.full_name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold text-lg">
+                            {friend.full_name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
-                        <p className="font-semibold">{friend.full_name}</p>
-                        <p className="text-sm text-muted-foreground">@{friend.username}</p>
-                        <Button variant="destructive" size="sm" className="mt-4 hover:scale-105 transition-transform duration-200" onClick={() => removeFriend(friend.username)}>Remove</Button>
+                        <p className="font-semibold text-foreground mb-1">{friend.full_name}</p>
+                        <p className="text-sm text-muted-foreground mb-4">@{friend.username}</p>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="w-full transition-all duration-200 hover:scale-105 active:scale-95" 
+                          onClick={() => removeFriend(friend.username)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
                       </Card>
                     ))}
                   </div>
-                ) : <p className="text-muted-foreground text-center py-12 text-lg">You haven't added any friends yet.</p>}
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-gradient-to-br from-muted/30 to-muted/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Users className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground text-lg mb-2">You haven't added any friends yet.</p>
+                    <p className="text-sm text-muted-foreground mb-6">Start building your network by searching for people to connect with.</p>
+                    <Button asChild className="transition-all duration-200 hover:scale-105">
+                      <Link to="/search">Find Friends</Link>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="incoming" className="mt-6">
-            <Card className="glass-effect">
-              <CardHeader><CardTitle className="gradient-text">Incoming Requests</CardTitle></CardHeader>
-              <CardContent>
+          {/* Incoming Requests Tab */}
+          <TabsContent value="incoming" className="animate-fade-in">
+            <Card className="glass-effect hover-lift transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="gradient-text flex items-center gap-2">
+                  <UserPlus className="w-5 h-5" />
+                  Incoming Requests
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
                 {incomingRequests.length > 0 ? (
                   <div className="space-y-3">
-                    {incomingRequests.map(req => (
-                      <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect">
+                    {incomingRequests.map((req, index) => (
+                      <div 
+                        key={req.id} 
+                        className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect transition-all duration-300 hover:shadow-lg hover:scale-[1.01] animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
                         <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10 shadow-md">
+                          <Avatar className="w-12 h-12 shadow-md ring-2 ring-secondary/20">
                             <AvatarImage src={req.users.avatar_url} />
-                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold">{req.users.full_name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-br from-secondary/30 to-secondary/20 text-secondary font-semibold">
+                              {req.users.full_name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-semibold">{req.users.full_name}</p>
+                            <p className="font-semibold text-foreground">{req.users.full_name}</p>
                             <p className="text-sm text-muted-foreground">@{req.users.username}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => acceptRequest(req)} className="hover:scale-105 transition-transform duration-200"><Check className="w-4 h-4 mr-1" /> Accept</Button>
-                          <Button size="sm" variant="destructive" onClick={() => declineRequest(req.id)} className="hover:scale-105 transition-transform duration-200"><X className="w-4 h-4 mr-1" /> Decline</Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => acceptRequest(req)} 
+                            className="transition-all duration-200 hover:scale-105 active:scale-95 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                          >
+                            <Check className="w-4 h-4 mr-1" /> 
+                            Accept
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => declineRequest(req.id)} 
+                            className="transition-all duration-200 hover:scale-105 active:scale-95"
+                          >
+                            <X className="w-4 h-4 mr-1" /> 
+                            Decline
+                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-muted-foreground text-center py-12 text-lg">No new friend requests.</p>}
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <UserPlus className="w-10 h-10 text-secondary" />
+                    </div>
+                    <p className="text-muted-foreground text-lg mb-2">No new friend requests.</p>
+                    <p className="text-sm text-muted-foreground">When someone sends you a friend request, it will appear here.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="outgoing" className="mt-6">
-            <Card className="glass-effect">
-              <CardHeader><CardTitle className="gradient-text">Sent Requests</CardTitle></CardHeader>
-              <CardContent>
+          {/* Outgoing Requests Tab */}
+          <TabsContent value="outgoing" className="animate-fade-in">
+            <Card className="glass-effect hover-lift transition-all duration-300">
+              <CardHeader className="pb-4">
+                <CardTitle className="gradient-text flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Sent Requests
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
                 {outgoingRequests.length > 0 ? (
                   <div className="space-y-3">
-                    {outgoingRequests.map(req => (
-                      <div key={req.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect">
+                    {outgoingRequests.map((req, index) => (
+                      <div 
+                        key={req.id} 
+                        className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-muted/40 to-muted/20 hover-lift glass-effect transition-all duration-300 hover:shadow-lg hover:scale-[1.01] animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
                         <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10 shadow-md">
+                          <Avatar className="w-12 h-12 shadow-md ring-2 ring-highlight/20">
                             <AvatarImage src={req.users.avatar_url} />
-                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold">{req.users.full_name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-br from-highlight/30 to-highlight/20 text-highlight font-semibold">
+                              {req.users.full_name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-semibold">{req.users.full_name}</p>
+                            <p className="font-semibold text-foreground">{req.users.full_name}</p>
                             <p className="text-sm text-muted-foreground">@{req.users.username}</p>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => declineRequest(req.id)} className="hover:scale-105 transition-transform duration-200"><Clock className="w-4 h-4 mr-1" /> Cancel Request</Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => declineRequest(req.id)} 
+                          className="transition-all duration-200 hover:scale-105 active:scale-95 border-highlight/30 text-highlight hover:bg-highlight/10"
+                        >
+                          <X className="w-4 h-4 mr-1" /> 
+                          Cancel Request
+                        </Button>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-muted-foreground text-center py-12 text-lg">You haven't sent any requests.</p>}
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-gradient-to-br from-highlight/20 to-highlight/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <Clock className="w-10 h-10 text-highlight" />
+                    </div>
+                    <p className="text-muted-foreground text-lg mb-2">You haven't sent any requests.</p>
+                    <p className="text-sm text-muted-foreground mb-6">Find people you'd like to connect with and send them a friend request.</p>
+                    <Button asChild className="transition-all duration-200 hover:scale-105">
+                      <Link to="/search">Discover People</Link>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -59,11 +59,12 @@ const PersonaCard = ({
   ];
   const displayName = user.full_name || user.username || "Anonymous";
   const displayBio = user.openai_persona || user.bio || "";
-  const maxBioLength = 120;
-  const isBioLong = displayBio.length > maxBioLength;
-  const truncatedBio = isBioLong
-    ? displayBio.slice(0, maxBioLength) + "..."
-    : displayBio;
+  
+  // Split bio into sentences and use the first complete sentence as preview
+  const bioSentences = displayBio.split(/[.!?]+/).filter(sentence => sentence.trim());
+  const firstSentence = bioSentences[0]?.trim();
+  const isBioLong = bioSentences.length > 1;
+  const truncatedBio = firstSentence ? firstSentence + (firstSentence.match(/[.!?]$/) ? '' : '.') : displayBio;
 
   const maxTagsToShow = isCompact ? 3 : 5;
   const hasMoreTags = tags.length > maxTagsToShow;
@@ -112,25 +113,52 @@ const PersonaCard = ({
 
         {/* Bio */}
         {!isCompact && displayBio && (
-          <div className="text-sm text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground/90">
-            {truncatedBio}
-            {isBioLong && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-2 text-primary underline hover:bg-primary/10 hover:text-primary/80 px-2 py-0.5 transition-all duration-200"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                Read More
-              </Button>
-            )}
+          <div className="bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl p-4 border border-border/20 transition-all duration-300 group-hover:border-primary/30">
+            <div className="text-sm text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground/90">
+              {/* Show only first sentence as preview */}
+              {truncatedBio && (
+                <div className="flex items-start gap-2 mb-3">
+                  <div className="w-1.5 h-1.5 bg-primary/60 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="flex-1">{truncatedBio}</p>
+                </div>
+              )}
+              
+              {isBioLong && (
+                <div className="flex justify-center pt-3">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-medium px-6 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    Read More
+                  </Button>
+                </div>
+              )}
+            </div>
             {/* Dialog for full bio */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogContent>
+              <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>About {displayName}</DialogTitle>
-                  <DialogDescription>{displayBio}</DialogDescription>
+                  <DialogTitle className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                    About {displayName}
+                  </DialogTitle>
                 </DialogHeader>
+                <div className="bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl p-4 border border-border/30">
+                  <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+                    {displayBio.split(/[.!?]+/).filter(sentence => sentence.trim()).map((sentence, index) => {
+                      const trimmedSentence = sentence.trim();
+                      if (!trimmedSentence) return null;
+                      
+                      return (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="flex-1">{trimmedSentence}{sentence.includes('.') || sentence.includes('!') || sentence.includes('?') ? '' : '.'}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
           </div>

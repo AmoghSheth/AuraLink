@@ -732,7 +732,7 @@ function ExportableCardDialog({ user }: { user: UserProfile }) {
     try {
       const res = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" +
-          import.meta.env.GEMINI_API_KEY,
+          import.meta.env.VITE_GEMINI_API_KEY,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -741,11 +741,28 @@ function ExportableCardDialog({ user }: { user: UserProfile }) {
               {
                 parts: [
                   {
-                    text: `Write a 3-sentence summary bio. Name: ${fullName}. Tags: ${tags.join(
-                      ", "
-                    )}. Hobbies: ${hobbies}. Facts: ${facts}. Favorites: ${favorites}. Personality: ${
-                      user.openai_persona || ""
-                    }`,
+                    text: `Create a well-structured 3-4 sentence bio that will display beautifully as bullet points in the UI.
+
+                    **FORMATTING REQUIREMENTS:**
+                    - Write 3-4 distinct, complete sentences
+                    - Each sentence should focus on a different aspect of their personality
+                    - End each sentence with proper punctuation (period, exclamation, or question mark)
+                    - Avoid run-on sentences - keep each sentence focused and clear
+                    - Make each sentence impactful and readable on its own
+
+                    **Content Structure:**
+                    1. Personality essence and core traits
+                    2. Interests, hobbies, and passions
+                    3. Values and lifestyle approach
+                    4. Connection goals or what makes them unique
+
+                    **User Details:**
+                    Name: ${fullName}
+                    Tags: ${tags.join(", ")}
+                    Hobbies: ${hobbies}
+                    Facts: ${facts}
+                    Favorites: ${favorites}
+                    Existing Personality: ${user.openai_persona || ""}`,
                   },
                 ],
               },

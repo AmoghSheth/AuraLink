@@ -49,6 +49,10 @@ import {
   Mail,
   Phone,
   Users,
+  Plus,
+  Mic,
+  Video,
+  Image,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
@@ -131,6 +135,7 @@ const Chats = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [chatFriends, setChatFriends] = useState<FriendWithUnreadCount[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -144,6 +149,16 @@ const Chats = () => {
   const [isChatOptionsOpen, setIsChatOptionsOpen] = useState(false);
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
   const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Auto scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Fetch current user and their friends
   useEffect(() => {
@@ -540,26 +555,28 @@ const Chats = () => {
     const isImage = file.type.startsWith("image/");
 
     return (
-      <div key={file.id} className="relative group">
+      <div key={file.id} className="relative group animate-fade-in">
         {isImage ? (
           <div className="relative">
             <img
               src={file.preview}
               alt={file.name}
-              className="w-20 h-20 object-cover rounded-lg border border-border/50"
+              className="w-20 h-20 object-cover rounded-xl border border-border/30 shadow-md"
             />
             <Button
               size="icon"
               variant="destructive"
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
               onClick={() => removeAttachedFile(file.id)}
             >
               <X className="h-3 w-3" />
             </Button>
           </div>
         ) : (
-          <div className="relative flex items-center gap-2 p-2 bg-muted rounded-lg border border-border/50 min-w-[200px]">
-            <FileText className="h-8 w-8 text-muted-foreground" />
+          <div className="relative flex items-center gap-3 p-3 bg-gradient-to-r from-muted/60 to-muted/40 rounded-xl border border-border/30 min-w-[220px] shadow-md">
+            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
+              <FileText className="h-5 w-5 text-primary" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>
               <p className="text-xs text-muted-foreground">
@@ -569,7 +586,7 @@ const Chats = () => {
             <Button
               size="icon"
               variant="destructive"
-              className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
               onClick={() => removeAttachedFile(file.id)}
             >
               <X className="h-3 w-3" />
@@ -584,7 +601,7 @@ const Chats = () => {
     if (!message.files || message.files.length === 0) return null;
 
     return (
-      <div className="mt-2 space-y-2">
+      <div className="mt-3 space-y-2">
         {message.files.map((file) => {
           const isImage = file.type.startsWith("image/");
 
@@ -594,12 +611,14 @@ const Chats = () => {
                 <img
                   src={file.url}
                   alt={file.name}
-                  className="max-w-[250px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  className="max-w-[280px] rounded-xl cursor-pointer hover:opacity-90 transition-all duration-200 shadow-md"
                   onClick={() => window.open(file.url, "_blank")}
                 />
               ) : (
-                <div className="flex items-center gap-2 p-2 bg-background/50 rounded-lg border border-border/20 max-w-[250px]">
-                  <FileText className="h-6 w-6 text-muted-foreground" />
+                <div className="flex items-center gap-3 p-3 bg-background/30 rounded-xl border border-border/30 max-w-[280px] hover:bg-background/50 transition-all duration-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -609,7 +628,7 @@ const Chats = () => {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-6 w-6"
+                    className="h-6 w-6 hover:scale-110 transition-transform duration-200"
                     onClick={() => window.open(file.url, "_blank")}
                   >
                     <Download className="h-3 w-3" />
@@ -642,7 +661,7 @@ const Chats = () => {
                   alt="AuraLink Logo"
                   className="w-10 h-10 transition-transform duration-300 hover:scale-110"
                 />
-                <span className="text-2xl font-bold gradient-text">AuraLink</span>
+                <span className="text-2xl font-display font-bold gradient-text tracking-tight">AuraLink</span>
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -660,9 +679,9 @@ const Chats = () => {
           <Card className="lg:col-span-1 flex flex-col glass-effect">
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold tracking-tight gradient-text">Messages</h2>
+                <h2 className="text-2xl font-display font-bold tracking-tight gradient-text">Messages</h2>
                 {totalUnreadCount > 0 && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse shadow-sm">
                     {totalUnreadCount} new
                   </Badge>
                 )}
@@ -675,7 +694,7 @@ const Chats = () => {
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200"
+                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200 rounded-xl"
                 />
               </div>
 
@@ -686,20 +705,22 @@ const Chats = () => {
                     <div
                       key={friend.id}
                       onClick={() => setSelectedChat(friend.username)}
-                      className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:scale-[1.02] hover-lift ${
+                      className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:scale-[1.02] hover-lift group ${
                         selectedChat === friend.username ? "bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <Avatar>
+                          <Avatar className="h-12 w-12 shadow-md ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-300">
                             <AvatarImage src={friend.avatar_url} />
-                            <AvatarFallback>{friend.full_name[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold">
+                              {friend.full_name[0]}
+                            </AvatarFallback>
                           </Avatar>
                           {friend.unread_count > 0 && (
                             <Badge 
                               variant="secondary" 
-                              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-r from-primary to-accent text-primary-foreground animate-pulse shadow-lg"
+                              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-r from-primary to-accent text-white animate-pulse shadow-lg text-xs"
                             >
                               {friend.unread_count}
                             </Badge>
@@ -707,7 +728,7 @@ const Chats = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-medium truncate">{friend.full_name}</h3>
+                            <h3 className="font-semibold truncate text-foreground">{friend.full_name}</h3>
                             {friend.last_message_time && (
                               <span className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(new Date(friend.last_message_time), { addSuffix: true })}
@@ -729,32 +750,40 @@ const Chats = () => {
           </Card>
 
           {/* Main Chat Area */}
-          <Card className="lg:col-span-3 flex flex-col glass-effect">
+          <Card className="lg:col-span-3 flex flex-col glass-effect overflow-hidden">
             {selectedChat && currentChatUser ? (
               <>
-                {/* Chat Header */}
-                <div className="p-6 border-b border-border/50 bg-gradient-to-r from-card/50 to-card/30">
+                {/* Enhanced Chat Header */}
+                <div className="p-6 border-b border-border/50 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <Avatar className="h-12 w-12 shadow-lg">
+                        <Avatar className="h-14 w-14 shadow-lg ring-2 ring-primary/20">
                           <AvatarImage src={currentChatUser.avatar} />
                           <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold text-lg">
                             {currentChatUser.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         {currentChatUser.isOnline && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
+                          <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse shadow-sm"></div>
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg gradient-text">
+                        <h3 className="font-display font-semibold text-xl gradient-text">
                           {currentChatUser.name}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {currentChatUser.isOnline
-                            ? "Online"
-                            : "Last seen recently"}
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          {currentChatUser.isOnline ? (
+                            <>
+                              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                              Online
+                            </>
+                          ) : (
+                            "Last seen recently"
+                          )}
+                          {isTyping && (
+                            <span className="text-primary animate-pulse">• typing...</span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -779,93 +808,107 @@ const Chats = () => {
                   </div>
                 </div>
 
-                {/* Messages Area */}
-                <ScrollArea className="flex-1 p-6">
+                {/* Enhanced Messages Area */}
+                <ScrollArea className="flex-1 p-6 bg-gradient-to-b from-background/30 to-background/10">
                   <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          message.sender_username === currentUser?.username
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
+                    {messages.map((message, index) => {
+                      const isOwnMessage = message.sender_username === currentUser?.username;
+                      const showAvatar = index === 0 || messages[index - 1]?.sender_username !== message.sender_username;
+                      
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-                            message.sender_username === currentUser?.username
-                              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground ml-12"
-                              : "bg-gradient-to-r from-card/90 to-card/70 mr-12 glass-effect"
-                          } ${message.isSending ? "opacity-70" : ""}`}
+                          key={message.id}
+                          className={`flex items-end gap-3 animate-fade-in ${
+                            isOwnMessage ? "justify-end" : "justify-start"
+                          }`}
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          {message.content && (
-                            <p className="text-sm leading-relaxed">
-                              {message.content}
-                            </p>
+                          {!isOwnMessage && showAvatar && (
+                            <Avatar className="h-8 w-8 shadow-md">
+                              <AvatarImage src={currentChatUser.avatar} />
+                              <AvatarFallback className="bg-gradient-to-br from-secondary/30 to-secondary/20 text-secondary text-sm">
+                                {currentChatUser.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
                           )}
-                          {renderMessageFiles({
-                            id: message.id,
-                            senderId: message.sender_username,
-                            content: message.content,
-                            timestamp: message.created_at,
-                            type: message.files ? "file" : "text",
-                            files: message.files,
-                            isDelivered: message.is_delivered,
-                            isSending: message.isSending
-                          })}
+                          
+                          {!isOwnMessage && !showAvatar && (
+                            <div className="w-8 h-8"></div>
+                          )}
+
                           <div
-                            className={`flex items-center justify-between mt-1 ${
-                              message.sender_username === currentUser?.username
-                                ? "flex-row-reverse"
-                                : ""
-                            }`}
+                            className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.01] group ${
+                              isOwnMessage
+                                ? "bg-gradient-to-br from-primary via-primary/90 to-accent text-white shadow-primary/20"
+                                : "bg-gradient-to-br from-card via-card/95 to-card/90 shadow-muted/20 glass-effect"
+                            } ${message.isSending ? "opacity-70 animate-pulse" : ""}`}
                           >
-                            <p
-                              className={`text-xs ${
-                                message.sender_username === currentUser?.username
-                                  ? "text-primary-foreground/70"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                            </p>
-                            {message.sender_username === currentUser?.username && (
-                              <div className="flex items-center gap-1 ml-2">
-                                {message.isSending ? (
-                                  <Loader2 className="w-3 h-3 animate-spin text-primary-foreground/50" />
-                                ) : message.is_delivered ? (
-                                  <CheckCircle2 className="w-3 h-3 text-primary-foreground/70" />
-                                ) : (
-                                  <Clock className="w-3 h-3 text-primary-foreground/50" />
-                                )}
-                              </div>
+                            {message.content && (
+                              <p className={`text-sm leading-relaxed ${
+                                isOwnMessage ? "text-white" : "text-foreground"
+                              }`}>
+                                {message.content}
+                              </p>
                             )}
+                            
+                            {renderMessageFiles({
+                              id: message.id,
+                              senderId: message.sender_username,
+                              content: message.content,
+                              timestamp: message.created_at,
+                              type: message.files ? "file" : "text",
+                              files: message.files,
+                              isDelivered: message.is_delivered,
+                              isSending: message.isSending
+                            })}
+                            
+                            <div className={`flex items-center gap-2 mt-2 ${
+                              isOwnMessage ? "justify-end" : "justify-start"
+                            }`}>
+                              <p className={`text-xs ${
+                                isOwnMessage ? "text-white/70" : "text-muted-foreground"
+                              }`}>
+                                {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                              </p>
+                              
+                              {isOwnMessage && (
+                                <div className="flex items-center">
+                                  {message.isSending ? (
+                                    <Loader2 className="w-3 h-3 animate-spin text-white/50" />
+                                  ) : message.is_delivered ? (
+                                    <CheckCircle2 className="w-3 h-3 text-white/70" />
+                                  ) : (
+                                    <Clock className="w-3 h-3 text-white/50" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
 
-                {/* Message Input */}
-                <div className="p-6 border-t border-border/50 bg-gradient-to-r from-card/50 to-card/30">
+                {/* Enhanced Message Input */}
+                <div className="p-6 border-t border-border/50 bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm">
                   {/* File Attachments Preview */}
                   {attachedFiles.length > 0 && (
-                    <div className="mb-4 p-3 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/50 glass-effect">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-4 p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/30 glass-effect">
+                      <div className="flex items-center gap-2 mb-3">
                         <Paperclip className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          {attachedFiles.length} file
-                          {attachedFiles.length > 1 ? "s" : ""} attached
+                          {attachedFiles.length} file{attachedFiles.length > 1 ? "s" : ""} attached
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {attachedFiles.map(renderFilePreview)}
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-end gap-3">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -874,62 +917,83 @@ const Chats = () => {
                       className="hidden"
                       accept="image/*,application/pdf,.doc,.docx,.txt,.zip,.rar"
                     />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
-                      onClick={handleFileAttachment}
-                    >
-                      <Paperclip className="w-4 h-4" />
-                    </Button>
-                    <div className="flex-1 relative">
-                      <Input
-                        placeholder="Type a message..."
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyPress={(e) =>
-                          e.key === "Enter" && handleSendMessage()
-                        }
-                        className="pr-12 bg-background/50 border-border/50 focus:border-primary/50 rounded-full transition-all duration-200 focus:scale-[1.02]"
-                      />
+                    
+                    {/* Attachment Options */}
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full hover:scale-110 transition-transform duration-200"
+                        className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
+                        onClick={handleFileAttachment}
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-primary/10 transition-all duration-200 hover:scale-110"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Image className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Message Input */}
+                    <div className="flex-1 relative">
+                                              <Input
+                          placeholder="Type your message..."
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          className="pr-12 bg-background/60 border-border/30 focus:border-primary/50 rounded-2xl transition-all duration-200 focus:scale-[1.01] min-h-[44px]"
+                        />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full hover:scale-110 transition-transform duration-200"
                       >
                         <Smile className="w-4 h-4" />
                       </Button>
                     </div>
+                    
+                    {/* Send Button */}
                     <Button
                       onClick={handleSendMessage}
-                      disabled={
-                        !messageInput.trim() && attachedFiles.length === 0
-                      }
-                      className="rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                      disabled={!messageInput.trim() && attachedFiles.length === 0}
+                      className="rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 w-12 h-12"
                       size="icon"
                     >
-                      <Send className="w-4 h-4" />
+                      <Send className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>
               </>
             ) : (
-              /* Empty State */
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center animate-fade-in">
-                  <div className="w-24 h-24 bg-gradient-to-br from-primary/30 to-accent/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg float-animation">
-                    <Send className="w-10 h-10 text-primary" />
+              /* Enhanced Empty State */
+              <div className="flex-1 flex items-center justify-center p-8">
+                <div className="text-center animate-fade-in max-w-md">
+                  <div className="w-32 h-32 bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl float-animation">
+                    <Send className="w-16 h-16 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-2 gradient-text">
+                  <h3 className="text-3xl font-display font-bold mb-4 gradient-text tracking-tight">
                     Start a Conversation
                   </h3>
-                  <p className="text-muted-foreground max-w-md text-lg">
-                    Select a chat from the sidebar to start messaging, or go
-                    back to discover new people to connect with.
+                  <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+                    Select a chat from the sidebar to start messaging, or go back to discover new people to connect with.
                   </p>
-                  <Button asChild className="mt-6">
-                    <Link to="/search">Find New Connections</Link>
-                  </Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button asChild className="transition-all duration-200 hover:scale-105">
+                      <Link to="/search">Find New Connections</Link>
+                    </Button>
+                    <Button variant="outline" asChild className="transition-all duration-200 hover:scale-105">
+                      <Link to="/friends">View Friends</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -939,7 +1003,7 @@ const Chats = () => {
 
       {/* User Info Dialog */}
       <Dialog open={isUserInfoOpen} onOpenChange={setIsUserInfoOpen}>
-        <DialogContent className="max-w-md bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
@@ -963,10 +1027,25 @@ const Chats = () => {
             {/* Bio */}
             {currentChatUser?.bio && (
               <div>
-                <h4 className="font-medium text-sm mb-2">About</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {currentChatUser.bio}
-                </p>
+                <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                  About
+                </h4>
+                <div className="bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl p-4 border border-border/30">
+                  <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+                    {currentChatUser.bio.split(/[.!?]+/).filter(sentence => sentence.trim()).map((sentence, index) => {
+                      const trimmedSentence = sentence.trim();
+                      if (!trimmedSentence) return null;
+                      
+                      return (
+                        <div key={index} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full mt-2 flex-shrink-0"></div>
+                          <p className="flex-1">{trimmedSentence}{sentence.includes('.') || sentence.includes('!') || sentence.includes('?') ? '' : '.'}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1062,7 +1141,7 @@ const Chats = () => {
 
       {/* Chat Options Dialog */}
       <Dialog open={isChatOptionsOpen} onOpenChange={setIsChatOptionsOpen}>
-        <DialogContent className="max-w-md bg-gradient-to-br from-card to-card/80 backdrop-blur-sm border border-border/50">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Chat Options</DialogTitle>
             <DialogDescription>
