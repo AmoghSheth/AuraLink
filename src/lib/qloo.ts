@@ -42,7 +42,7 @@ class QlooService {
     const requestBody = {
       signal: {
         interests: {
-          filter: { type: 'keyword' },
+          filter: { type: 'entity' },
           entities: allEntities.map(name => ({ name })),
         },
       },
@@ -67,7 +67,7 @@ class QlooService {
     const requestBody = {
       signal: {
         interests: {
-          filter: { type: 'keyword' },
+          filter: { type: 'entity' },
           entities: allEntities.map(name => ({ name })),
         },
       },
