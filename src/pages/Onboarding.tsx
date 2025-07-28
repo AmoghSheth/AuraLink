@@ -327,7 +327,10 @@ const Onboarding = () => {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                  <div 
+                    className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center text-gray-400 font-bold text-2xl overflow-hidden hover:border-gray-300 hover:bg-gray-50 hover:scale-105 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     {formData.photo ? (
                       <img 
                         src={URL.createObjectURL(formData.photo)} 
@@ -335,7 +338,13 @@ const Onboarding = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      "👤"
+                      <svg 
+                        className="w-12 h-12 text-gray-400" 
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
                     )}
                   </div>
                   <input
