@@ -4,7 +4,6 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Copy, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import QlooService from "@/lib/qloo";
 
 interface AISuggestionPopupProps {
   isOpen: boolean;
@@ -44,39 +43,7 @@ const AISuggestionPopup: React.FC<AISuggestionPopupProps> = ({
     const toastId = toast.loading("AI is analyzing your interests...");
 
     try {
-      // First, get QLOO recommendations
-      toast.info("Getting personalized recommendations from Qloo...", {
-        id: toastId,
-      });
-
-      const allUserData = [
-        ...userProfile.interests,
-        ...userProfile.values,
-        ...userProfile.lifestyle,
-      ];
-
-      const qlooRecommendations =
-        await QlooService.getMultiDomainRecommendations(
-          userProfile.interests,
-          userProfile.values,
-          userProfile.lifestyle
-        );
-
-      // Process QLOO data into a readable format
-      const qlooSummary = qlooRecommendations
-        .map((domain) => {
-          const items = domain.results
-            .slice(0, 3)
-            .map((item) => item.name)
-            .join(", ");
-          return `${domain.domain}: ${items}`;
-        })
-        .join("; ");
-
-      // Now use Gemini to generate post suggestions based on QLOO data
-      toast.info("Generating creative post ideas...", { id: toastId });
-
-      const geminiPrompt = `
+      const openaiPrompt = `
         You are a creative social media AI assistant. Generate engaging group post ideas based on a user's personality and interests.
 
         **User Profile:**
@@ -85,9 +52,6 @@ const AISuggestionPopup: React.FC<AISuggestionPopupProps> = ({
         - Values: ${userProfile.values.join(", ")}
         - Lifestyle: ${userProfile.lifestyle.join(", ")}
         - AI Persona: ${userProfile.openai_persona || "Not available"}
-        
-        **Personalized Recommendations from Qloo AI:**
-        ${qlooSummary}
 
         **Task:**
         Generate 9 creative, engaging post ideas that this person could share in a group chat. Organize them into 3 categories with 3 suggestions each:
@@ -99,11 +63,11 @@ const AISuggestionPopup: React.FC<AISuggestionPopupProps> = ({
         **Requirements:**
         - Each suggestion should be 1-2 sentences maximum
         - Make them feel authentic to the user's personality
-        - Incorporate their interests and the Qloo recommendations naturally
+        - Incorporate their interests naturally
         - Keep them friendly and group-appropriate
         - Make them engaging and likely to get responses
 
-        **Format as JSON:**
+        **Format your response as a valid JSON object only:**
         {
           "discussion_starters": ["idea1", "idea2", "idea3"],
           "personal_shares": ["idea1", "idea2", "idea3"],
@@ -111,38 +75,43 @@ const AISuggestionPopup: React.FC<AISuggestionPopupProps> = ({
         }
       `;
 
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${
-          import.meta.env.VITE_GEMINI_API_KEY
-        }`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: geminiPrompt }],
-              },
-            ],
-          }),
-        }
-      );
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a creative social media assistant. Always respond with valid JSON only.'
+            },
+            {
+              role: 'user',
+              content: openaiPrompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.8,
+          max_tokens: 1000,
+        }),
+      });
 
-      if (!geminiResponse.ok) {
-        throw new Error("Failed to generate suggestions");
+      if (!openaiResponse.ok) {
+        const errorData = await openaiResponse.json();
+        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
       }
 
-      const geminiData = await geminiResponse.json();
-      const responseText =
-        geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const openaiData = await openaiResponse.json();
+      const responseText = openaiData.choices?.[0]?.message?.content || '';
 
-      // Extract JSON from the response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("Invalid response format");
+      if (!responseText) {
+        throw new Error('No response from OpenAI');
       }
 
-      const parsedSuggestions = JSON.parse(jsonMatch[0]);
+      const parsedSuggestions = JSON.parse(responseText);
 
       const formattedSuggestions: SuggestionCategory[] = [
         {
@@ -163,9 +132,37 @@ const AISuggestionPopup: React.FC<AISuggestionPopupProps> = ({
       toast.success("AI suggestions generated!", { id: toastId });
     } catch (error) {
       console.error("Error generating suggestions:", error);
-      toast.error("Failed to generate suggestions. Please try again.", {
-        id: toastId,
-      });
+      
+      // Provide fallback suggestions if API fails
+      const fallbackSuggestions: SuggestionCategory[] = [
+        {
+          category: "Discussion Starters",
+          suggestions: [
+            "What's everyone's favorite way to unwind after a long day?",
+            "If you could learn any new skill instantly, what would it be and why?",
+            "What's the best advice you've ever received?"
+          ]
+        },
+        {
+          category: "Personal Shares",
+          suggestions: [
+            "Just discovered something amazing that I had to share with you all!",
+            "Been thinking about this lately and wanted to get your thoughts...",
+            "Had an interesting experience today that reminded me of our conversations here."
+          ]
+        },
+        {
+          category: "Group Activities",
+          suggestions: [
+            "Anyone up for a virtual game night this weekend?",
+            "Should we start a group challenge or goal together?",
+            "What do you think about organizing a group discussion on an interesting topic?"
+          ]
+        }
+      ];
+      
+      setSuggestions(fallbackSuggestions);
+      toast.warning("Using fallback suggestions - API temporarily unavailable", { id: toastId });
     } finally {
       setIsGenerating(false);
     }
