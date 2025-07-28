@@ -159,8 +159,15 @@ const PersonaViewer = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-start gap-6">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-2xl">
-                    {user.full_name.charAt(0)}
+                  <div className="relative">
+                    <img
+                      src={user.id ? getCloudinaryUrl(user.id) : "/logo.png"}
+                      alt={user.full_name}
+                      className="w-32 h-32 rounded-full shadow-xl border-4 border-background object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/logo.png";
+                      }}
+                    />
                   </div>
                   <div className="flex-1">
                     <h1 className="text-3xl font-display font-bold text-foreground mb-1 tracking-tight-pro">{user.full_name}</h1>
@@ -296,5 +303,7 @@ const PersonaViewer = () => {
     </div>
   );
 };
-
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
+};
 export default PersonaViewer;
