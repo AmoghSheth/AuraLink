@@ -253,8 +253,13 @@ const Friends = () => {
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <Avatar className="w-16 h-16 mb-3 shadow-lg ring-2 ring-primary/20 transition-all duration-300 hover:ring-primary/40">
-                          <AvatarImage src={friend.avatar_url} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold text-lg">
+                          <AvatarImage 
+                            src={getCloudinaryUrl(friend.id)}
+                            onError={(e) => {
+                              e.currentTarget.src = "/logo.png";
+                            }}
+                          />
+                          <AvatarFallback>
                             {friend.full_name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -414,6 +419,10 @@ const Friends = () => {
       </div>
     </div>
   );
+};
+
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
 };
 
 export default Friends;

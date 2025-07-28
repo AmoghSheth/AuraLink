@@ -759,8 +759,13 @@ const Chats = () => {
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <Avatar className="h-14 w-14 shadow-lg ring-2 ring-primary/20">
-                          <AvatarImage src={currentChatUser.avatar} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-primary font-semibold text-lg">
+                          <AvatarImage 
+                            src={getCloudinaryUrl(currentChatUser.id)}
+                            onError={(e) => {
+                              e.currentTarget.src = "/logo.png";
+                            }}
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30">
                             {currentChatUser.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -1264,6 +1269,9 @@ const Chats = () => {
       </Dialog>
     </div>
   );
+};
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
 };
 
 export default Chats;

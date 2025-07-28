@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowLeft, Sparkles, Upload } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+
+// Add this type for the Cloudinary response
+type CloudinaryResponse = {
+  secure_url: string;
+  public_id: string;
+};
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -25,6 +30,8 @@ const Onboarding = () => {
     values: [] as string[],
     lifestyle: [] as string[],
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const interestOptions = [
     "Indie Music", "Coffee", "Hiking", "Photography", "Cooking", "Reading",
@@ -222,6 +229,63 @@ const Onboarding = () => {
     }
   };
 
+  // Add this function to handle file selection
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, photo: file }));
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+      formData.append('public_id', `user-photos/${user.id}`); // Set custom public_id
+
+      // Upload to Cloudinary
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const cloudinaryData: CloudinaryResponse = await response.json();
+
+      // Update Supabase with the image URL
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ image_url: cloudinaryData.secure_url })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('Failed to upload photo. Please try again.');
+      setFormData(prev => ({ ...prev, photo: null }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6">
       <div className="container mx-auto max-w-2xl">
@@ -263,12 +327,31 @@ const Onboarding = () => {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-2xl">
-                    {formData.photo ? "📸" : "👤"}
+                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                    {formData.photo ? (
+                      <img 
+                        src={URL.createObjectURL(formData.photo)} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      "👤"
+                    )}
                   </div>
-                  <Button variant="outline" className="mb-4">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="mb-4"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Photo (Optional)
+                    {formData.photo ? 'Change Photo' : 'Upload Photo (Optional)'}
                   </Button>
                 </div>
 

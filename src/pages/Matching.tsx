@@ -315,8 +315,15 @@ const Matching = () => {
               </HoverCardTrigger>
               <HoverCardContent className="w-80">
                 <div className="flex justify-between space-x-4">
-                  <Avatar>
-                    <AvatarImage src={currentMatch.avatar_url} />
+                  <Avatar className="w-full h-full">
+                    <AvatarImage
+                      src={currentMatch.id ? getCloudinaryUrl(currentMatch.id) : "/logo.png"}
+                      alt={currentMatch.full_name}
+                      className="object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/logo.png";
+                      }}
+                    />
                     <AvatarFallback>
                       {currentMatch.full_name.charAt(0)}
                     </AvatarFallback>
@@ -448,4 +455,8 @@ const Matching = () => {
   );
 };
 
+
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
+};
 export default Matching;
