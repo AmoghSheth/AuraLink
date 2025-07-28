@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // This interface is designed to be compatible with the 'users' table in Supabase
 interface PersonaCardUser {
@@ -79,13 +80,18 @@ const PersonaCard = ({
       <CardContent className={`${isCompact ? "p-3" : "p-6"} space-y-4`}>
         {/* Header */}
         <div className="flex items-center gap-4">
-          <div
-            className={`${
-              isCompact ? "w-16 h-16" : "w-20 h-20"
-            } rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center font-bold text-primary transition-all duration-500 group-hover:scale-125 group-hover:rotate-6 shadow-lg`}
-          >
-            {displayName.charAt(0).toUpperCase()}
-          </div>
+          <Avatar className="h-12 w-12 shadow-md">
+            <AvatarImage 
+              src={user.id ? getCloudinaryUrl(user.id) : "/logo.png"}
+              alt={user.full_name}
+              onError={(e) => {
+                e.currentTarget.src = "/logo.png";
+              }}
+            />
+            <AvatarFallback>
+              {user.full_name.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-1">
               <h3
@@ -237,6 +243,10 @@ const PersonaCard = ({
       </CardContent>
     </Card>
   );
+};
+
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
 };
 
 export default PersonaCard;

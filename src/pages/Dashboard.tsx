@@ -490,9 +490,12 @@ const Dashboard = () => {
                           className="min-w-[220px] bg-gradient-to-br from-card/90 to-card/70 rounded-xl p-4 flex flex-col items-center justify-between shadow-lg hover-lift glass-effect"
                         >
                           <img
-                            src={dm.avatar_url || "/logo.png"}
+                            src={dm.id ? getCloudinaryUrl(dm.id) : "/logo.png"}
                             alt={dm.full_name}
-                            className="w-12 h-12 rounded-full mb-2 shadow-md"
+                            className="w-12 h-12 rounded-full mb-2 shadow-md object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "/logo.png";
+                            }}
                           />
                           <div className="font-semibold text-base truncate text-center">
                             {dm.full_name}
@@ -978,3 +981,8 @@ function ExportableCardDialog({ user }: { user: UserProfile }) {
     </Dialog>
   );
 }
+
+// --- Cloudinary URL Helper ---
+export const getCloudinaryUrl = (userId: string) => {
+  return `https://res.cloudinary.com/ddlpuoyei/image/upload/v1753661631/user-photos/${userId}`;
+};
