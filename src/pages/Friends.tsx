@@ -84,33 +84,49 @@ const Friends = () => {
     const toastId = toast.loading("Accepting request...");
 
     try {
-        // Update the request status
-        const { error: updateError } = await supabase
-            .from("friend_requests")
-            .update({ status: 'accepted' })
-            .eq("id", request.id);
-        if (updateError) throw updateError;
+      // Step 1: Get fresh data for both users to avoid stale state.
+      const { data: senderProfile, error: senderError } = await supabase
+        .from("users")
+        .select("friends, username")
+        .eq("username", request.from_user_username)
+        .single();
+      if (senderError) throw new Error(`Could not find sender: ${senderError.message}`);
 
-        // Add friend to current user's list
-        const { error: currentUserError } = await supabase
-            .from("users")
-            .update({ friends: [...(currentUser.friends || []), request.from_user_username] })
-            .eq("username", currentUser.username);
-        if (currentUserError) throw currentUserError;
+      const { data: currentUserProfile, error: currentUserError } = await supabase
+        .from("users")
+        .select("friends, username")
+        .eq("id", currentUser.id)
+        .single();
+      if (currentUserError) throw new Error(`Could not find your profile: ${currentUserError.message}`);
 
-        // Add current user to the other user's friend list
-        const { data: otherUser, error: otherUserError } = await supabase.from("users").select("friends").eq("username", request.from_user_username).single();
-        if(otherUserError) throw otherUserError;
-        const { error: otherUserUpdateError } = await supabase
-            .from("users")
-            .update({ friends: [...(otherUser.friends || []), currentUser.username] })
-            .eq("username", request.from_user_username);
-        if(otherUserUpdateError) throw otherUserUpdateError;
+      // Step 2: Update the friend request status to 'accepted'.
+      const { error: updateRequestError } = await supabase
+        .from("friend_requests")
+        .update({ status: 'accepted' })
+        .eq("id", request.id);
+      if (updateRequestError) throw new Error(`Failed to update request: ${updateRequestError.message}`);
 
-        toast.success("Friend request accepted!", { id: toastId });
-        fetchData(); // Refresh all data
+      // Step 3: Concurrently update both users' friend lists.
+      const [senderUpdateResult, currentUserUpdateResult] = await Promise.all([
+        // Add current user to the sender's friend list
+        supabase
+          .from("users")
+          .update({ friends: [...(senderProfile.friends || []), currentUserProfile.username] })
+          .eq("username", senderProfile.username),
+        // Add sender to the current user's friend list
+        supabase
+          .from("users")
+          .update({ friends: [...(currentUserProfile.friends || []), senderProfile.username] })
+          .eq("username", currentUserProfile.username)
+      ]);
+
+      if (senderUpdateResult.error) throw new Error(`Failed to update sender's friends: ${senderUpdateResult.error.message}`);
+      if (currentUserUpdateResult.error) throw new Error(`Failed to update your friends: ${currentUserUpdateResult.error.message}`);
+
+      toast.success("Friend request accepted!", { id: toastId });
+      fetchData(); // Refresh all data to reflect the changes.
     } catch (err: any) {
-        toast.error(err.message, { id: toastId });
+      toast.error(err.message, { id: toastId });
     }
   };
 

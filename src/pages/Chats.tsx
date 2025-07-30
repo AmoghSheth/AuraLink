@@ -178,6 +178,22 @@ const Chats = () => {
       if (profile) {
         setCurrentUser(profile);
 
+        // If userId is present in params, resolve it to a username and set selectedChat
+        if (userId) {
+          const { data: chatPartnerProfile, error: chatPartnerError } = await supabase
+            .from("users")
+            .select("username")
+            .eq("id", userId)
+            .single();
+          if (chatPartnerProfile) {
+            setSelectedChat(chatPartnerProfile.username);
+          } else if (chatPartnerError) {
+            console.error("Error fetching chat partner username:", chatPartnerError);
+            toast.error("Could not find chat partner.");
+            navigate("/chats"); // Redirect to general chats if partner not found
+          }
+        }
+
         // Fetch all friends
         if (profile.friends && profile.friends.length > 0) {
           const { data: friends } = await supabase
@@ -265,7 +281,7 @@ const Chats = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [currentUser?.username]);
+  }, [currentUser?.username, userId]);
 
   // Fetch messages when chat is selected
   useEffect(() => {
