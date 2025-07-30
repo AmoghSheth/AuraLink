@@ -178,30 +178,66 @@ const Chats = () => {
       if (profile) {
         setCurrentUser(profile);
 
-        // Fetch friends with their last message time and unread counts
+        // Fetch all friends
         if (profile.friends && profile.friends.length > 0) {
           const { data: friends } = await supabase
             .from("users")
-            .select(`
-              *,
-              messages!inner(count)
-            `)
-            .in("username", profile.friends)
-            .eq('messages.receiver_username', profile.username)
-            .eq('messages.is_read', false)
-            .order("last_message_time", { ascending: false, nullsFirst: false });
+            .select("*")
+            .in("username", profile.friends);
 
-          // Calculate total unread messages
-          const total = friends?.reduce((sum, friend) => sum + (friend.messages?.[0]?.count || 0), 0) || 0;
-          setTotalUnreadCount(total);
+          if (friends) {
+            // Get messages for all conversations
+            const { data: allMessages } = await supabase
+              .from("messages")
+              .select("*")
+              .or(
+                `and(sender_username.eq.${profile.username},receiver_username.in.(${profile.friends.join(",")})),` +
+                  `and(sender_username.in.(${profile.friends.join(",")}),receiver_username.eq.${profile.username})`
+              )
+              .order("created_at", { ascending: false });
 
-          // Format friends with unread counts
-          const friendsWithCounts = friends?.map(friend => ({
-            ...friend,
-            unread_count: friend.unread_count?.[0]?.count || 0
-          })) || [];
+            // Process friends with their last messages and unread counts
+            const friendsWithDetails = friends.map((friend) => {
+              // Find all messages for this conversation
+              const conversationMessages =
+                allMessages?.filter(
+                  (msg) =>
+                    (msg.sender_username === friend.username &&
+                      msg.receiver_username === profile.username) ||
+                    (msg.sender_username === profile.username &&
+                      msg.receiver_username === friend.username)
+                ) || [];
 
-          setChatFriends(friendsWithCounts);
+              // Get last message
+              const lastMessage = conversationMessages[0];
+
+              // Calculate unread count
+              const unreadCount = conversationMessages.filter(
+                (msg) =>
+                  msg.sender_username === friend.username &&
+                  msg.receiver_username === profile.username &&
+                  !msg.is_read
+              ).length;
+
+              return {
+                ...friend,
+                last_message: lastMessage,
+                last_message_time: lastMessage?.created_at || null,
+                unread_count: unreadCount,
+              };
+            });
+
+            // Sort friends by last message time
+            const sortedFriends = friendsWithDetails.sort((a, b) => {
+              const aTime = a.last_message_time || a.created_at;
+              const bTime = b.last_message_time || b.created_at;
+              return (
+                new Date(bTime).getTime() - new Date(aTime).getTime()
+              );
+            });
+
+            setChatFriends(sortedFriends);
+          }
         }
       }
     };
@@ -210,14 +246,14 @@ const Chats = () => {
 
     // Set up real-time subscription for new messages
     const channel = supabase
-      .channel('new_messages')
+      .channel("new_messages")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `receiver_username=eq.${currentUser?.username}`
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_username=eq.${currentUser?.username}`,
         },
         () => {
           // Refresh friends list when new message arrives
@@ -236,50 +272,61 @@ const Chats = () => {
     if (!selectedChat || !currentUser) return;
 
     const fetchMessages = async () => {
-      // First get the selected user's profile
-      const { data: receiver } = await supabase
-        .from('users')
-        .select('username')
-        .eq('id', selectedChat)
-        .single();
-
-      if (!receiver?.username) return;
-
-      // Fetch messages where either user is sender or receiver
+      // Fetch messages between the two users
       const { data: messages } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_username.eq.${currentUser.username},receiver_username.eq.${receiver.username}),and(sender_username.eq.${receiver.username},receiver_username.eq.${currentUser.username})`)
-        .order('created_at');
+        .from("messages")
+        .select("*")
+        .or(
+          `and(sender_username.eq.${currentUser.username},receiver_username.eq.${selectedChat}),` +
+          `and(sender_username.eq.${selectedChat},receiver_username.eq.${currentUser.username})`
+        )
+        .order("created_at", { ascending: true });
 
       setMessages(messages || []);
 
       // Mark messages as read
       await supabase
-        .from('messages')
+        .from("messages")
         .update({ is_read: true })
         .match({
-          sender_username: receiver.username,
+          sender_username: selectedChat,
           receiver_username: currentUser.username,
-          is_read: false
+          is_read: false,
         });
+
+      // Update unread counts in the chat list
+      setChatFriends((prev) =>
+        prev.map((friend) =>
+          friend.username === selectedChat
+            ? { ...friend, unread_count: 0 }
+            : friend
+        )
+      );
     };
 
     fetchMessages();
 
     // Set up real-time subscription for new messages
     const channel = supabase
-      .channel('messages')
+      .channel(`chat:${selectedChat}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `receiver_username=eq.${currentUser.username}`
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `or(and(sender_username.eq.${currentUser.username},receiver_username.eq.${selectedChat}),and(sender_username.eq.${selectedChat},receiver_username.eq.${currentUser.username}))`,
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as ChatMessage]);
+          setMessages((prev) => [...prev, payload.new as ChatMessage]);
+          
+          // If message is from the other user, mark it as read
+          if (payload.new.sender_username === selectedChat) {
+            supabase
+              .from("messages")
+              .update({ is_read: true })
+              .eq("id", payload.new.id);
+          }
         }
       )
       .subscribe();
@@ -479,45 +526,33 @@ const Chats = () => {
     setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
-  // Update the handleSendMessage function
+  // Update handleSendMessage to use username
   const handleSendMessage = async () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return;
     if (!currentUser || !selectedChat) return;
 
-    // Get the selected friend's profile
-    const { data: receiver } = await supabase
-      .from('users')
-      .select('username')
-      .eq('id', selectedChat)
-      .single();
-
-    if (!receiver?.username) {
-      toast.error("Couldn't find recipient");
-      return;
-    }
-
     const newMessage = {
       sender_username: currentUser.username,
-      receiver_username: receiver.username,
+      receiver_username: selectedChat,
       content: messageInput.trim(),
       files: attachedFiles.length > 0 ? attachedFiles : null,
       created_at: new Date().toISOString(),
       is_delivered: false,
-      is_read: false
+      is_read: false,
     };
 
     // Optimistically add message to UI
     const tempMessage = { ...newMessage, id: Date.now().toString(), isSending: true };
-    setMessages(prev => [...prev, tempMessage as ChatMessage]);
+    setMessages((prev) => [...prev, tempMessage as ChatMessage]);
 
     // Clear input and files
-    setMessageInput('');
+    setMessageInput("");
     setAttachedFiles([]);
 
     try {
       // Insert the message
       const { data, error } = await supabase
-        .from('messages')
+        .from("messages")
         .insert(newMessage)
         .select()
         .single();
@@ -525,8 +560,8 @@ const Chats = () => {
       if (error) throw error;
 
       // Update messages with the actual message from the database
-      setMessages(prev => 
-        prev.map(msg => 
+      setMessages((prev) =>
+        prev.map((msg) =>
           msg.id === tempMessage.id ? { ...data, isSending: false } : msg
         )
       );
@@ -534,21 +569,35 @@ const Chats = () => {
       // Update last message time for both users
       const now = new Date().toISOString();
       await supabase
-        .from('users')
+        .from("users")
         .update({ last_message_time: now })
-        .in('username', [currentUser.username, receiver.username]);
-
+        .in("username", [currentUser.username, selectedChat]); // Using selectedChat instead of receiver.username
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       // Remove the temporary message if sending failed
-      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
-      toast.error('Failed to send message');
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+      toast.error("Failed to send message");
     }
   };
 
-  const handleChatSelect = (chatId: string) => {
-    setSelectedChat(chatId);
-    navigate(`/chats/${chatId}`);
+  // Update the handleChatSelect function
+  const handleChatSelect = async (username: string) => {
+    setSelectedChat(username);
+    
+    // Get the user's profile for the chat header
+    const { data: selectedUser } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", username)
+      .single();
+
+    if (selectedUser) {
+      // Update the URL without full page reload
+      navigate(`/chats/${selectedUser.id}`, { 
+        state: { user: selectedUser },
+        replace: true 
+      });
+    }
   };
 
   const renderFilePreview = (file: AttachedFile) => {
@@ -651,7 +700,11 @@ const Chats = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
-                <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:scale-110 transition-transform duration-200"
+                >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
@@ -661,11 +714,17 @@ const Chats = () => {
                   alt="AuraLink Logo"
                   className="w-10 h-10 transition-transform duration-300 hover:scale-110"
                 />
-                <span className="text-2xl font-display font-bold gradient-text tracking-tight">AuraLink</span>
+                <span className="text-2xl font-display font-bold gradient-text tracking-tight">
+                  AuraLink
+                </span>
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform duration-200">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:scale-110 transition-transform duration-200"
+              >
                 <Settings className="w-4 h-4" />
               </Button>
             </div>
@@ -679,9 +738,14 @@ const Chats = () => {
           <Card className="lg:col-span-1 flex flex-col glass-effect">
             <CardContent className="p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-display font-bold tracking-tight gradient-text">Messages</h2>
+                <h2 className="text-2xl font-display font-bold tracking-tight gradient-text">
+                  Messages
+                </h2>
                 {totalUnreadCount > 0 && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse shadow-sm">
+                  <Badge
+                    variant="secondary"
+                    className="bg-gradient-to-r from-primary/20 to-accent/20 text-primary animate-pulse shadow-sm"
+                  >
                     {totalUnreadCount} new
                   </Badge>
                 )}
@@ -704,9 +768,11 @@ const Chats = () => {
                   {chatFriends.map((friend) => (
                     <div
                       key={friend.id}
-                      onClick={() => setSelectedChat(friend.username)}
+                      onClick={() => handleChatSelect(friend.username)}
                       className={`p-4 rounded-xl cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:scale-[1.02] hover-lift group ${
-                        selectedChat === friend.username ? "bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg" : ""
+                        selectedChat === friend.username
+                          ? "bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg"
+                          : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -718,8 +784,8 @@ const Chats = () => {
                             </AvatarFallback>
                           </Avatar>
                           {friend.unread_count > 0 && (
-                            <Badge 
-                              variant="secondary" 
+                            <Badge
+                              variant="secondary"
                               className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-r from-primary to-accent text-white animate-pulse shadow-lg text-xs"
                             >
                               {friend.unread_count}
@@ -728,10 +794,15 @@ const Chats = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold truncate text-foreground">{friend.full_name}</h3>
+                            <h3 className="font-semibold truncate text-foreground">
+                              {friend.full_name}
+                            </h3>
                             {friend.last_message_time && (
                               <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(friend.last_message_time), { addSuffix: true })}
+                                {formatDistanceToNow(
+                                  new Date(friend.last_message_time),
+                                  { addSuffix: true }
+                                )}
                               </span>
                             )}
                           </div>
@@ -759,7 +830,7 @@ const Chats = () => {
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <Avatar className="h-14 w-14 shadow-lg ring-2 ring-primary/20">
-                          <AvatarImage 
+                          <AvatarImage
                             src={getCloudinaryUrl(currentChatUser.id)}
                             onError={(e) => {
                               e.currentTarget.src = "/logo.png";
@@ -787,7 +858,9 @@ const Chats = () => {
                             "Last seen recently"
                           )}
                           {isTyping && (
-                            <span className="text-primary animate-pulse">• typing...</span>
+                            <span className="text-primary animate-pulse">
+                              • typing...
+                            </span>
                           )}
                         </p>
                       </div>
@@ -995,7 +1068,11 @@ const Chats = () => {
                     <Button asChild className="transition-all duration-200 hover:scale-105">
                       <Link to="/search">Find New Connections</Link>
                     </Button>
-                    <Button variant="outline" asChild className="transition-all duration-200 hover:scale-105">
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="transition-all duration-200 hover:scale-105"
+                    >
                       <Link to="/friends">View Friends</Link>
                     </Button>
                   </div>
@@ -1038,17 +1115,27 @@ const Chats = () => {
                 </h4>
                 <div className="bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl p-4 border border-border/30">
                   <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
-                    {currentChatUser.bio.split(/[.!?]+/).filter(sentence => sentence.trim()).map((sentence, index) => {
-                      const trimmedSentence = sentence.trim();
-                      if (!trimmedSentence) return null;
-                      
-                      return (
-                        <div key={index} className="flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full mt-2 flex-shrink-0"></div>
-                          <p className="flex-1">{trimmedSentence}{sentence.includes('.') || sentence.includes('!') || sentence.includes('?') ? '' : '.'}</p>
-                        </div>
-                      );
-                    })}
+                    {currentChatUser.bio
+                      .split(/[.!?]+/)
+                      .filter((sentence) => sentence.trim())
+                      .map((sentence, index) => {
+                        const trimmedSentence = sentence.trim();
+                        if (!trimmedSentence) return null;
+
+                        return (
+                          <div key={index} className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 bg-primary/60 rounded-full mt-2 flex-shrink-0"></div>
+                            <p className="flex-1">
+                              {trimmedSentence}
+                              {sentence.includes(".") ||
+                              sentence.includes("!") ||
+                              sentence.includes("?")
+                                ? ""
+                                : "."}
+                            </p>
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
               </div>
