@@ -110,7 +110,7 @@ const Landing = () => {
                 Create Your PersonaCard
               </Button>
             </Link>
-            <Link to="/search">
+            <Link to="/signup">
               <Button
                 size="lg"
                 variant="outline"

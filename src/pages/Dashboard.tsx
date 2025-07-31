@@ -612,11 +612,11 @@ const Dashboard = () => {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {g.members.length} members
+                          {g.members ? g.members.length : 0} members
                         </p>
                       </div>
-                      <Button size="sm" variant="outline">
-                        Join Group
+                      <Button size="sm" variant="outline" asChild>
+                        <Link to="/groups">Join Group</Link>
                       </Button>
                     </div>
                   ))
